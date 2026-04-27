@@ -1,0 +1,232 @@
+import {
+  AccountType,
+  CategoryType,
+  InstitutionType,
+  PaymentMethod,
+  PaymentMethodBehavior,
+  PrismaClient,
+} from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const kevin = await prisma.person.upsert({
+    where: { code: "kevin" },
+    update: { name: "Kevin", isActive: true },
+    create: { name: "Kevin", code: "kevin" },
+  });
+
+  const isabelle = await prisma.person.upsert({
+    where: { code: "isabelle" },
+    update: { name: "Isabelle", isActive: true },
+    create: { name: "Isabelle", code: "isabelle" },
+  });
+
+  const nubank = await prisma.financialInstitution.upsert({
+    where: { name_type: { name: "Nubank", type: InstitutionType.BANK } },
+    update: {},
+    create: { name: "Nubank", shortName: "Nu", type: InstitutionType.BANK },
+  });
+
+  const inter = await prisma.financialInstitution.upsert({
+    where: { name_type: { name: "Inter", type: InstitutionType.BANK } },
+    update: {},
+    create: { name: "Inter", shortName: "Inter", type: InstitutionType.BANK },
+  });
+
+  const wallet = await prisma.financialInstitution.upsert({
+    where: { name_type: { name: "Dinheiro", type: InstitutionType.OTHER } },
+    update: {},
+    create: { name: "Dinheiro", shortName: "Cash", type: InstitutionType.OTHER },
+  });
+
+  const accounts = [
+    {
+      name: "Conta Nubank Kevin",
+      type: AccountType.CHECKING,
+      institutionId: nubank.id,
+      ownerPersonId: kevin.id,
+      isShared: false,
+      initialBalance: 0,
+      creditLimit: null,
+      closingDay: null,
+      dueDay: null,
+    },
+    {
+      name: "Cartao Nubank Kevin",
+      type: AccountType.CREDIT_CARD,
+      institutionId: nubank.id,
+      ownerPersonId: kevin.id,
+      isShared: false,
+      initialBalance: 0,
+      creditLimit: 3000,
+      closingDay: 20,
+      dueDay: 27,
+    },
+    {
+      name: "Conta Inter Isabelle",
+      type: AccountType.CHECKING,
+      institutionId: inter.id,
+      ownerPersonId: isabelle.id,
+      isShared: false,
+      initialBalance: 0,
+      creditLimit: null,
+      closingDay: null,
+      dueDay: null,
+    },
+    {
+      name: "Carteira",
+      type: AccountType.CASH,
+      institutionId: wallet.id,
+      ownerPersonId: kevin.id,
+      isShared: false,
+      initialBalance: 0,
+      creditLimit: null,
+      closingDay: null,
+      dueDay: null,
+    },
+  ];
+
+  for (const account of accounts) {
+    const existing = await prisma.financialAccount.findFirst({
+      where: {
+        name: account.name,
+        ownerPersonId: account.ownerPersonId,
+      },
+    });
+
+    if (!existing) {
+      await prisma.financialAccount.create({ data: account });
+    } else {
+      await prisma.financialAccount.update({
+        where: { id: existing.id },
+        data: {
+          institutionId: account.institutionId,
+          type: account.type,
+          ownerPersonId: account.ownerPersonId,
+          isShared: account.isShared,
+          initialBalance: account.initialBalance,
+          creditLimit: account.creditLimit,
+          closingDay: account.closingDay,
+          dueDay: account.dueDay,
+          isActive: true,
+        },
+      });
+    }
+  }
+
+  const categories = [
+    { name: "Salario", type: CategoryType.INCOME },
+    { name: "Freelas", type: CategoryType.INCOME },
+    { name: "Mercado", type: CategoryType.EXPENSE },
+    { name: "Moradia", type: CategoryType.EXPENSE },
+    { name: "Saude", type: CategoryType.EXPENSE },
+    { name: "IFood/restaurante", type: CategoryType.EXPENSE },
+    { name: "Desenvolvimento", type: CategoryType.EXPENSE },
+    { name: "Transporte", type: CategoryType.EXPENSE },
+    { name: "Assinaturas", type: CategoryType.EXPENSE },
+    { name: "Lazer", type: CategoryType.EXPENSE },
+    { name: "Roupa", type: CategoryType.EXPENSE },
+    { name: "Beleza", type: CategoryType.EXPENSE },
+    { name: "Presentes", type: CategoryType.EXPENSE },
+    { name: "Despesas eventuais", type: CategoryType.EXPENSE },
+    { name: "Outro", type: CategoryType.BOTH },
+  ];
+
+  for (const category of categories) {
+    const existing = await prisma.category.findFirst({
+      where: {
+        name: category.name,
+        type: category.type,
+        parentCategoryId: null,
+      },
+    });
+
+    if (!existing) {
+      await prisma.category.create({ data: category });
+    }
+  }
+
+  const paymentMethods = [
+    {
+      name: "Pix",
+      behavior: PaymentMethodBehavior.PIX,
+      paymentMethod: PaymentMethod.PIX,
+      requiresInstallments: false,
+      immediateSettlement: true,
+    },
+    {
+      name: "Debito",
+      behavior: PaymentMethodBehavior.DEBITO,
+      paymentMethod: PaymentMethod.DEBIT,
+      requiresInstallments: false,
+      immediateSettlement: true,
+    },
+    {
+      name: "Credito a vista",
+      behavior: PaymentMethodBehavior.CREDITO_A_VISTA,
+      paymentMethod: PaymentMethod.CREDIT_SINGLE,
+      requiresInstallments: false,
+      immediateSettlement: false,
+    },
+    {
+      name: "Credito parcelado",
+      behavior: PaymentMethodBehavior.CREDITO_PARCELADO,
+      paymentMethod: PaymentMethod.CREDIT_INSTALLMENT,
+      requiresInstallments: true,
+      immediateSettlement: false,
+    },
+    {
+      name: "Dinheiro",
+      behavior: PaymentMethodBehavior.DINHEIRO,
+      paymentMethod: PaymentMethod.CASH,
+      requiresInstallments: false,
+      immediateSettlement: true,
+    },
+    {
+      name: "Transferencia",
+      behavior: PaymentMethodBehavior.TRANSFERENCIA,
+      paymentMethod: PaymentMethod.BANK_TRANSFER,
+      requiresInstallments: false,
+      immediateSettlement: true,
+    },
+    {
+      name: "Boleto",
+      behavior: PaymentMethodBehavior.BOLETO,
+      paymentMethod: PaymentMethod.BOLETO,
+      requiresInstallments: false,
+      immediateSettlement: false,
+    },
+    {
+      name: "Outro",
+      behavior: PaymentMethodBehavior.OUTRO,
+      paymentMethod: PaymentMethod.OTHER,
+      requiresInstallments: false,
+      immediateSettlement: false,
+    },
+  ];
+
+  for (const paymentMethod of paymentMethods) {
+    await prisma.paymentMethodOption.upsert({
+      where: { paymentMethod: paymentMethod.paymentMethod },
+      update: {
+        name: paymentMethod.name,
+        behavior: paymentMethod.behavior,
+        requiresInstallments: paymentMethod.requiresInstallments,
+        immediateSettlement: paymentMethod.immediateSettlement,
+        isActive: true,
+      },
+      create: paymentMethod,
+    });
+  }
+}
+
+main()
+  .then(async () => {
+    await prisma.$disconnect();
+  })
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

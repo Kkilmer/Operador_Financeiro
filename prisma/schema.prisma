@@ -1,0 +1,255 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum InstitutionType {
+  BANK
+  CARD_ISSUER
+  BROKER
+  WALLET_PROVIDER
+  OTHER
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  DIGITAL_WALLET
+  CREDIT_CARD
+  DEBIT_CARD
+  MULTIPLE_CARD
+  INVESTMENT
+  OTHER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+  BOTH
+  INVESTMENT
+}
+
+enum EntryType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  PIX
+  DEBIT
+  CASH
+  CREDIT_SINGLE
+  CREDIT_INSTALLMENT
+  BANK_TRANSFER
+  BOLETO
+  OTHER
+}
+
+enum SettlementStatus {
+  PENDING
+  SETTLED
+  CANCELED
+}
+
+enum EntryOrigin {
+  MANUAL
+  RECURRING_GENERATED
+  INSTALLMENT_GENERATED
+}
+
+enum EntryFrequencyProfile {
+  FIXED
+  VARIABLE
+}
+
+enum InstallmentStatus {
+  OPEN
+  SETTLED
+  CANCELED
+}
+
+enum PaymentMethodBehavior {
+  PIX
+  DEBITO
+  CREDITO_A_VISTA
+  CREDITO_PARCELADO
+  DINHEIRO
+  TRANSFERENCIA
+  BOLETO
+  OUTRO
+}
+
+model Person {
+  id        String           @id @default(cuid())
+  name      String
+  code      String           @unique
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  accounts  FinancialAccount[]
+  entries   FinancialEntry[]
+  purchases InstallmentPurchase[]
+}
+
+model FinancialInstitution {
+  id        String             @id @default(cuid())
+  name      String
+  shortName String?
+  type      InstitutionType
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  accounts  FinancialAccount[]
+
+  @@unique([name, type])
+}
+
+model FinancialAccount {
+  id            String                @id @default(cuid())
+  name          String
+  type          AccountType
+  institutionId String?
+  ownerPersonId String?
+  isShared      Boolean               @default(false)
+  currency      String                @default("BRL")
+  initialBalance Decimal?
+  creditLimit   Decimal?
+  closingDay    Int?
+  dueDay        Int?
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  institution   FinancialInstitution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  ownerPerson   Person?               @relation(fields: [ownerPersonId], references: [id], onDelete: SetNull)
+
+  entries       FinancialEntry[]
+  purchases     InstallmentPurchase[]
+
+  @@index([institutionId])
+  @@index([ownerPersonId])
+  @@index([type])
+  @@index([isActive])
+}
+
+model Category {
+  id               String       @id @default(cuid())
+  name             String
+  type             CategoryType
+  color            String?
+  icon             String?
+  parentCategoryId String?
+  isEssential      Boolean      @default(false)
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  parentCategory   Category?    @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  childCategories  Category[]   @relation("CategoryHierarchy")
+
+  entries          FinancialEntry[]
+  purchases        InstallmentPurchase[]
+
+  @@unique([name, type, parentCategoryId])
+  @@index([type])
+  @@index([parentCategoryId])
+  @@index([isActive])
+}
+
+model PaymentMethodOption {
+  id                   String                @id @default(cuid())
+  name                 String
+  behavior             PaymentMethodBehavior
+  paymentMethod        PaymentMethod         @unique
+  requiresInstallments Boolean               @default(false)
+  immediateSettlement  Boolean               @default(false)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@unique([name])
+  @@index([behavior])
+  @@index([isActive])
+}
+
+model FinancialEntry {
+  id               String                @id @default(cuid())
+  type             EntryType
+  description      String
+  amount           Decimal
+  eventDate        DateTime
+  competenceDate   DateTime
+  personId         String
+  accountId        String
+  categoryId       String?
+  paymentMethod    PaymentMethod
+  settlementStatus SettlementStatus
+  frequencyProfile EntryFrequencyProfile @default(VARIABLE)
+  isInstallment    Boolean               @default(false)
+  notes            String?
+  origin           EntryOrigin           @default(MANUAL)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  person           Person                @relation(fields: [personId], references: [id], onDelete: Restrict)
+  account          FinancialAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category         Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  installment      Installment?
+
+  @@index([personId, competenceDate])
+  @@index([accountId, competenceDate])
+  @@index([categoryId, competenceDate])
+  @@index([paymentMethod, competenceDate])
+  @@index([eventDate])
+}
+
+model InstallmentPurchase {
+  id                String           @id @default(cuid())
+  description       String
+  totalAmount       Decimal
+  installmentCount  Int
+  installmentAmount Decimal
+  purchaseDate      DateTime
+  notes             String?
+  personId          String
+  accountId         String
+  categoryId        String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  person            Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
+  account           FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category          Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  installments      Installment[]
+
+  @@index([personId, purchaseDate])
+  @@index([accountId, purchaseDate])
+  @@index([categoryId, purchaseDate])
+}
+
+model Installment {
+  id                    String             @id @default(cuid())
+  installmentPurchaseId String
+  financialEntryId      String             @unique
+  number                Int
+  amount                Decimal
+  dueDate               DateTime
+  competenceDate        DateTime
+  status                InstallmentStatus  @default(OPEN)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  installmentPurchase   InstallmentPurchase @relation(fields: [installmentPurchaseId], references: [id], onDelete: Cascade)
+  financialEntry        FinancialEntry      @relation(fields: [financialEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([installmentPurchaseId, number])
+  @@index([competenceDate, status])
+  @@index([dueDate])
+}
