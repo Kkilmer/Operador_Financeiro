@@ -42,16 +42,14 @@ function splitInstallments(totalAmount: number, installmentCount: number) {
 export async function createFinancialEntryUseCase(input: CreateFinancialEntryInput) {
   const eventDate = normalizeDateInput(input.eventDate);
   const competenceDate = startOfMonth(eventDate);
-  const paymentMethod =
-    input.type === EntryType.INCOME ? input.paymentMethod ?? PaymentMethod.OTHER : input.paymentMethod!;
-  const frequencyProfile =
-    input.type === EntryType.INCOME
-      ? input.frequencyProfile ?? EntryFrequencyProfile.VARIABLE
-      : input.frequencyProfile!;
-  const settlementStatus =
-    input.type === EntryType.INCOME
-      ? SettlementStatus.SETTLED
-      : resolveSettlementStatus(paymentMethod, input.settlementStatus!);
+  const isExpense = input.type === EntryType.EXPENSE;
+  const paymentMethod = isExpense ? input.paymentMethod! : input.paymentMethod ?? PaymentMethod.OTHER;
+  const frequencyProfile = isExpense
+    ? input.frequencyProfile!
+    : input.frequencyProfile ?? EntryFrequencyProfile.VARIABLE;
+  const settlementStatus = isExpense
+    ? resolveSettlementStatus(paymentMethod, input.settlementStatus!)
+    : SettlementStatus.SETTLED;
 
   const [person, account, category] = await Promise.all([
     prisma.person.findUnique({ where: { id: input.personId } }),
@@ -74,11 +72,19 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     throw new Error("Escolha uma categoria válida para a saída.");
   }
 
-  if (category) {
-    const expectedCategoryType =
-      input.type === EntryType.INCOME ? CategoryType.INCOME : CategoryType.EXPENSE;
+  if (input.type === EntryType.SAVED && !category) {
+    throw new Error("Escolha um destino válido para o dinheiro guardado.");
+  }
 
-    if (category.type !== expectedCategoryType && category.type !== CategoryType.BOTH) {
+  if (category) {
+    const categoryMatches =
+      (input.type === EntryType.INCOME &&
+        (category.type === CategoryType.INCOME || category.type === CategoryType.BOTH)) ||
+      (input.type === EntryType.EXPENSE &&
+        (category.type === CategoryType.EXPENSE || category.type === CategoryType.BOTH)) ||
+      (input.type === EntryType.SAVED && category.type === CategoryType.INVESTMENT);
+
+    if (!categoryMatches) {
       throw new Error("A categoria escolhida não combina com esse tipo de lançamento.");
     }
 
@@ -87,7 +93,7 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     }
   }
 
-  if (input.type === EntryType.EXPENSE && (!paymentMethodOption || !paymentMethodOption.isActive)) {
+  if (isExpense && (!paymentMethodOption || !paymentMethodOption.isActive)) {
     throw new Error("A forma de pagamento escolhida está oculta ou não existe.");
   }
 

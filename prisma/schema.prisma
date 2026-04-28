@@ -37,6 +37,7 @@ enum CategoryType {
 enum EntryType {
   INCOME
   EXPENSE
+  SAVED
 }
 
 enum PaymentMethod {

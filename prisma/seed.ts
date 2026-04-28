@@ -130,6 +130,11 @@ async function main() {
     { name: "Beleza", type: CategoryType.EXPENSE },
     { name: "Presentes", type: CategoryType.EXPENSE },
     { name: "Despesas eventuais", type: CategoryType.EXPENSE },
+    { name: "Poupança", type: CategoryType.INVESTMENT },
+    { name: "Reserva de emergência", type: CategoryType.INVESTMENT },
+    { name: "Investimento", type: CategoryType.INVESTMENT },
+    { name: "Renda fixa", type: CategoryType.INVESTMENT },
+    { name: "Outro", type: CategoryType.INVESTMENT },
     { name: "Outro", type: CategoryType.BOTH },
   ];
 

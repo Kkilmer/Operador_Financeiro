@@ -4,11 +4,20 @@ import { z } from "zod";
 const positiveMoneyMessage = "Informe um valor maior que zero.";
 const emptyStringToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
+const moneyInputToNumber = z.preprocess((value) => {
+  if (typeof value === "string") {
+    const normalized = value.trim().replace(/\s+/g, "").replace(/\./g, "").replace(",", ".");
+
+    return normalized;
+  }
+
+  return value;
+}, z.coerce.number().positive(positiveMoneyMessage));
 
 export const createFinancialEntrySchema = z
   .object({
     description: z.string().trim().min(1, "Preencha este campo para continuar."),
-    amount: z.coerce.number().positive(positiveMoneyMessage),
+    amount: moneyInputToNumber,
     eventDate: z.string().min(1, "Informe a data do lançamento."),
     type: z.nativeEnum(EntryType, {
       errorMap: () => ({ message: "Escolha se este lançamento é uma entrada ou uma saída." }),
@@ -39,7 +48,9 @@ export const createFinancialEntrySchema = z
         message:
           data.type === EntryType.INCOME
             ? "Escolha uma categoria para a entrada."
-            : "Escolha uma categoria para a saída.",
+            : data.type === EntryType.SAVED
+              ? "Escolha onde esse dinheiro foi guardado."
+              : "Escolha uma categoria para a saída.",
       });
     }
 
@@ -75,11 +86,22 @@ export const createFinancialEntrySchema = z
       });
     }
 
+    if (data.type === EntryType.SAVED && data.paymentMethod === PaymentMethod.CREDIT_INSTALLMENT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["paymentMethod"],
+        message: "Dinheiro guardado não pode ser registrado como parcelado.",
+      });
+    }
+
     if (data.isInstallment && data.type !== EntryType.EXPENSE) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["isInstallment"],
-        message: "Só saídas podem ser parceladas.",
+        message:
+          data.type === EntryType.SAVED
+            ? "Dinheiro guardado não pode ser parcelado."
+            : "Só saídas podem ser parceladas.",
       });
     }
 

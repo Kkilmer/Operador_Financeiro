@@ -33,6 +33,8 @@ function typeLabel(type: CategoryType) {
       return "Saída";
     case CategoryType.BOTH:
       return "Ambos";
+    case CategoryType.INVESTMENT:
+      return "Guardado / Reserva";
     default:
       return type;
   }

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma/client";
+import { serializePrisma } from "@/lib/utils/serialize-prisma";
 
 export async function listAccounts() {
-  return prisma.financialAccount.findMany({
+  const accounts = await prisma.financialAccount.findMany({
     orderBy: [{ isActive: "desc" }, { name: "asc" }],
     select: {
       id: true,
@@ -33,5 +34,6 @@ export async function listAccounts() {
       },
     },
   });
-}
 
+  return serializePrisma(accounts);
+}

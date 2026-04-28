@@ -1,3 +1,7 @@
+function isDateOnlyInput(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 export function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -7,10 +11,19 @@ export function addMonths(date: Date, months: number) {
 }
 
 export function normalizeDateInput(value: string | Date) {
-  const date = value instanceof Date ? value : new Date(value);
+  let date: Date;
+
+  if (value instanceof Date) {
+    date = value;
+  } else if (isDateOnlyInput(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    date = new Date(year, month - 1, day);
+  } else {
+    date = new Date(value);
+  }
 
   if (Number.isNaN(date.getTime())) {
-    throw new Error("Data invalida.");
+    throw new Error("Data inválida.");
   }
 
   return date;

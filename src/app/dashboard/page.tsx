@@ -4,9 +4,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
 import { SummaryCard } from "@/components/ui/summary-card";
 import { BalanceCard } from "@/features/dashboard/components/balance-card";
+import { CategoryExpensesChart } from "@/features/dashboard/components/category-expenses-chart";
 import { InstallmentsCard } from "@/features/dashboard/components/installments-card";
 import { MonthFilterForm } from "@/features/dashboard/components/month-filter-form";
 import { RecentTransactions } from "@/features/dashboard/components/recent-transactions";
+import { SavedMoneyCard } from "@/features/dashboard/components/saved-money-card";
 import { getDashboardSummary } from "@/features/dashboard/services/get-dashboard-summary";
 
 type DashboardPageProps = {
@@ -26,7 +28,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Home</p>
           <h1 className="mt-2 text-3xl font-semibold">Resumo do mês</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Veja rapidamente saldo, entradas, saídas, parcelas do mês e os últimos lançamentos.
+            Veja rapidamente saldo disponível, entradas, saídas, dinheiro guardado, parcelas do mês e os últimos lançamentos.
           </p>
         </div>
 
@@ -54,7 +56,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
           <SummaryCard label="Entradas do mês" value={summary.totalIncome} tone="positive" />
           <SummaryCard label="Saídas do mês" value={summary.totalExpense} tone="negative" />
+          <SummaryCard label="Dinheiro guardado" value={summary.totalSaved} />
         </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
+        <CategoryExpensesChart items={summary.categoryExpenses} />
+        <SavedMoneyCard totalSaved={summary.totalSaved} items={summary.savedEntries} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[0.9fr,1.1fr]">
@@ -62,7 +70,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           totalInstallments={summary.totalInstallments}
           items={summary.installmentsPreview}
         />
+      </section>
 
+      <section>
         <SectionCard
           title="Últimos lançamentos"
           description="Os registros mais recentes do mês filtrado."

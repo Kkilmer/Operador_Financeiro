@@ -103,6 +103,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
             <option value={CategoryType.INCOME}>Entrada</option>
             <option value={CategoryType.EXPENSE}>Saída</option>
             <option value={CategoryType.BOTH}>Ambos</option>
+            <option value={CategoryType.INVESTMENT}>Guardado / Reserva</option>
           </select>
           <FieldError message={state.fieldErrors?.type?.[0]} />
         </label>

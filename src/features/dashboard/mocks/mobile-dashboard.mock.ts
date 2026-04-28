@@ -6,7 +6,8 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
     referenceMonth,
     totalIncome: 8650,
     totalExpense: 5230.4,
-    balance: 3419.6,
+    totalSaved: 1000,
+    balance: 2419.6,
     totalInstallments: 742.5,
     totalFixedExpenses: 2150,
     totalVariableExpenses: 3080.4,
@@ -14,6 +15,12 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
     spendingByCategory: [
       { label: "Mercado", total: 980.2 },
       { label: "Moradia", total: 1550 },
+    ],
+    categoryExpenses: [
+      { label: "Moradia", total: 1550, percentage: 29.6, color: "#0f766e" },
+      { label: "Mercado", total: 980.2, percentage: 18.7, color: "#2563eb" },
+      { label: "Saúde", total: 620.4, percentage: 11.9, color: "#ea580c" },
+      { label: "Lazer", total: 410, percentage: 7.8, color: "#7c3aed" },
     ],
     spendingByPerson: [
       { label: "Kevin", total: 2740.9 },
@@ -30,6 +37,17 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
     spendingByPaymentMethod: [
       { label: "PIX", total: 890.4 },
       { label: "CREDIT_INSTALLMENT", total: 742.5 },
+    ],
+    savedEntries: [
+      {
+        id: "saved-1",
+        description: "Reserva do mês",
+        amount: 1000,
+        personName: "Kevin",
+        accountName: "Conta Nubank Kevin",
+        destinationName: "Poupança",
+        eventDateLabel: "26/04/2026",
+      },
     ],
     installmentsPreview: [
       { id: "mock-1", cardName: "Cartao Nubank Kevin", amount: 249.9, installmentLabel: "3/12" },
@@ -68,6 +86,17 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
         accountName: "Conta Nubank Kevin",
         categoryName: "Salario",
         eventDateLabel: "25/04/2026",
+        isInstallment: false,
+      },
+      {
+        id: "recent-4",
+        description: "Reserva do mês",
+        amount: 1000,
+        type: "SAVED",
+        personName: "Kevin",
+        accountName: "Conta Nubank Kevin",
+        categoryName: "Poupança",
+        eventDateLabel: "26/04/2026",
         isInstallment: false,
       },
     ],

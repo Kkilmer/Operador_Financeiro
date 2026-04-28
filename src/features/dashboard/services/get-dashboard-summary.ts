@@ -3,7 +3,17 @@ import { EntryFrequencyProfile, EntryType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
 import { toMapTotals } from "@/features/dashboard/utils/dashboard-aggregations";
-import { formatMonthYear } from "@/lib/utils/date";
+
+const CATEGORY_CHART_COLORS = [
+  "#0f766e",
+  "#2563eb",
+  "#ea580c",
+  "#7c3aed",
+  "#dc2626",
+  "#0891b2",
+  "#65a30d",
+  "#d97706",
+];
 
 function getReferenceMonthDate(referenceMonth?: string) {
   if (!referenceMonth) {
@@ -54,6 +64,7 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
     people,
     incomeGrouped,
     expenseGrouped,
+    savedGrouped,
     installmentGrouped,
     fixedGrouped,
     variableGrouped,
@@ -63,6 +74,7 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
     paymentMethodGrouped,
     entriesCount,
     recentEntries,
+    savedEntries,
     installmentPreview,
   ] = await Promise.all([
     prisma.person.findMany({
@@ -79,6 +91,11 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
     prisma.financialEntry.groupBy({
       by: ["type"],
       where: { ...where, type: EntryType.EXPENSE },
+      _sum: { amount: true },
+    }),
+    prisma.financialEntry.groupBy({
+      by: ["type"],
+      where: { ...where, type: EntryType.SAVED },
       _sum: { amount: true },
     }),
     prisma.financialEntry.groupBy({
@@ -123,6 +140,12 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
       orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
       take: 5,
     }),
+    prisma.financialEntry.findMany({
+      where: { ...where, type: EntryType.SAVED },
+      include: { person: true, account: true, category: true },
+      orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
+      take: 4,
+    }),
     prisma.installment.findMany({
       where: {
         competenceDate: {
@@ -149,7 +172,7 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
           in: categoryGrouped.flatMap((row) => (row.categoryId ? [row.categoryId] : [])),
         },
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, color: true },
     }),
     prisma.person.findMany({
       where: {
@@ -178,16 +201,34 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
   ]);
 
   const categoryLookup = new Map(categories.map((category) => [category.id, category.name]));
+  const categoryColorLookup = new Map(categories.map((category) => [category.name, category.color ?? null]));
   const personLookup = new Map(groupedPeople.map((person) => [person.id, person.name]));
   const accountLookup = new Map(accounts.map((account) => [account.id, account.name]));
   const institutionLookup = new Map(accounts.map((account) => [account.id, account.institution?.name ?? account.name]));
+
+  const totalExpense = getAmountSum(expenseGrouped);
+  const totalSaved = getAmountSum(savedGrouped);
+  const categoryExpenses = toMapTotals(
+    categoryGrouped.map((row) => ({
+      key: row.categoryId ? categoryLookup.get(row.categoryId) : null,
+      total: Number(row._sum.amount ?? 0),
+    })),
+    "Sem categoria",
+  ).map((item, index) => {
+    return {
+      ...item,
+      percentage: totalExpense > 0 ? (item.total / totalExpense) * 100 : 0,
+      color: categoryColorLookup.get(item.label) || CATEGORY_CHART_COLORS[index % CATEGORY_CHART_COLORS.length],
+    };
+  });
 
   return {
     greetingName: people[0]?.name ?? "Kevin",
     referenceMonth: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`,
     totalIncome: getAmountSum(incomeGrouped),
-    totalExpense: getAmountSum(expenseGrouped),
-    balance: getAmountSum(incomeGrouped) - getAmountSum(expenseGrouped),
+    totalExpense,
+    totalSaved,
+    balance: getAmountSum(incomeGrouped) - totalExpense - totalSaved,
     totalInstallments: getAmountSum(installmentGrouped),
     totalFixedExpenses: getAmountSum(fixedGrouped),
     totalVariableExpenses: getAmountSum(variableGrouped),
@@ -199,6 +240,7 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
       })),
       "Sem categoria",
     ),
+    categoryExpenses,
     spendingByPerson: toMapTotals(
       personGrouped.map((row) => ({
         key: personLookup.get(row.personId),
@@ -232,6 +274,15 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
       cardName: installment.installmentPurchase.account.name,
       amount: Number(installment.amount),
       installmentLabel: `${installment.number}/${installment.installmentPurchase.installmentCount}`,
+    })),
+    savedEntries: savedEntries.map((entry) => ({
+      id: entry.id,
+      description: entry.description,
+      amount: Number(entry.amount),
+      personName: entry.person.name,
+      accountName: entry.account.name,
+      destinationName: entry.category?.name ?? null,
+      eventDateLabel: formatEntryDate(entry.eventDate),
     })),
     recentEntries: recentEntries.map((entry) => ({
       id: entry.id,

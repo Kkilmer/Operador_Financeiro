@@ -64,5 +64,5 @@ export async function createFinancialEntryAction(
     };
   }
 
-  redirect("/lancamentos");
+  redirect("/lancamentos?status=created");
 }

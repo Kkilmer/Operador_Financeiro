@@ -41,6 +41,10 @@ function ErrorText({ message }: { message?: string }) {
   return <p className="text-sm text-red-600">{message}</p>;
 }
 
+function Field({ children }: { children: React.ReactNode }) {
+  return <div className="min-w-0">{children}</div>;
+}
+
 export function FinancialEntryForm({
   people,
   accounts,
@@ -81,7 +85,19 @@ export function FinancialEntryForm({
       ),
     [categories],
   );
-  const visibleCategories = selectedType === EntryType.INCOME ? incomeCategories : expenseCategories;
+  const savedCategories = useMemo(
+    () => categories.filter((category) => category.type === CategoryType.INVESTMENT),
+    [categories],
+  );
+  const visibleCategories =
+    selectedType === EntryType.INCOME
+      ? incomeCategories
+      : selectedType === EntryType.SAVED
+        ? savedCategories
+        : expenseCategories;
+  const isExpense = selectedType === EntryType.EXPENSE;
+  const isIncome = selectedType === EntryType.INCOME;
+  const isSaved = selectedType === EntryType.SAVED;
 
   useEffect(() => {
     if (mode === "sheet") {
@@ -96,7 +112,7 @@ export function FinancialEntryForm({
   }, [mode, onSuccess, state.success]);
 
   useEffect(() => {
-    if (selectedType === EntryType.INCOME) {
+    if (selectedType === EntryType.INCOME || selectedType === EntryType.SAVED) {
       setSelectedPaymentMethod(PaymentMethod.OTHER);
       setSelectedSettlementStatus(SettlementStatus.SETTLED);
       setSelectedFrequencyProfile(EntryFrequencyProfile.VARIABLE);
@@ -104,7 +120,13 @@ export function FinancialEntryForm({
       setInstallmentCount("0");
 
       const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
-      if (selectedCategory && selectedCategory.type === CategoryType.EXPENSE) {
+      if (
+        selectedCategory &&
+        ((selectedType === EntryType.INCOME &&
+          selectedCategory.type !== CategoryType.INCOME &&
+          selectedCategory.type !== CategoryType.BOTH) ||
+          (selectedType === EntryType.SAVED && selectedCategory.type !== CategoryType.INVESTMENT))
+      ) {
         setSelectedCategoryId("");
       }
 
@@ -120,7 +142,11 @@ export function FinancialEntryForm({
     }
 
     const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
-    if (selectedCategory && selectedCategory.type === CategoryType.INCOME) {
+    if (
+      selectedCategory &&
+      selectedCategory.type !== CategoryType.EXPENSE &&
+      selectedCategory.type !== CategoryType.BOTH
+    ) {
       setSelectedCategoryId("");
     }
   }, [
@@ -145,27 +171,27 @@ export function FinancialEntryForm({
       <input
         type="hidden"
         name="paymentMethod"
-        value={selectedType === EntryType.INCOME ? PaymentMethod.OTHER : selectedPaymentMethod}
+        value={isExpense ? selectedPaymentMethod : PaymentMethod.OTHER}
       />
       <input
         type="hidden"
         name="settlementStatus"
-        value={selectedType === EntryType.INCOME ? SettlementStatus.SETTLED : selectedSettlementStatus}
+        value={isExpense ? selectedSettlementStatus : SettlementStatus.SETTLED}
       />
       <input
         type="hidden"
         name="frequencyProfile"
-        value={selectedType === EntryType.INCOME ? EntryFrequencyProfile.VARIABLE : selectedFrequencyProfile}
+        value={isExpense ? selectedFrequencyProfile : EntryFrequencyProfile.VARIABLE}
       />
-      <input type="hidden" name="installmentCount" value={selectedType === EntryType.INCOME ? "0" : installmentCount} />
-      {selectedType === EntryType.INCOME ? <input type="hidden" name="isInstallment" value="false" /> : null}
+      <input type="hidden" name="installmentCount" value={isExpense ? installmentCount : "0"} />
+      {!isExpense ? <input type="hidden" name="isInstallment" value="false" /> : null}
 
       <div className="space-y-1">
         <h1 className={mode === "sheet" ? "text-xl font-semibold text-slate-900" : "text-2xl font-semibold text-slate-900"}>
           Novo lançamento
         </h1>
         <p className="text-sm text-slate-600">
-          Registre uma entrada de dinheiro ou um novo gasto do dia a dia.
+          Registre uma entrada, um gasto do dia a dia ou um valor que foi guardado.
         </p>
       </div>
 
@@ -175,60 +201,68 @@ export function FinancialEntryForm({
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">O que foi?</span>
           <input
             name="description"
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
             placeholder="Ex.: Mercado do mês"
           />
           <ErrorText message={state.fieldErrors?.description?.[0]} />
         </label>
+        </Field>
 
-        <label className="space-y-2">
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">Valor</span>
           <input
             name="amount"
             ref={amountInputRef}
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
             inputMode="decimal"
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-lg"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3 text-lg"
             placeholder="0,00"
           />
           <ErrorText message={state.fieldErrors?.amount?.[0]} />
         </label>
+        </Field>
 
-        <label className="space-y-2">
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">Data</span>
           <input
             name="eventDate"
             type="date"
             defaultValue={today}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
           />
           <ErrorText message={state.fieldErrors?.eventDate?.[0]} />
         </label>
+        </Field>
 
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">É uma entrada ou uma saída?</span>
+        <Field>
+        <label className="block min-w-0 space-y-2">
+          <span className="text-sm font-medium text-slate-700">Que tipo de lançamento é esse?</span>
           <select
             name="type"
             value={selectedType}
             onChange={(event) => setSelectedType(event.target.value as EntryType)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
           >
             <option value={EntryType.EXPENSE}>Saída</option>
             <option value={EntryType.INCOME}>Entrada</option>
+            <option value={EntryType.SAVED}>Guardado / Poupança</option>
           </select>
           <ErrorText message={state.fieldErrors?.type?.[0]} />
         </label>
+        </Field>
 
-        <label className="space-y-2">
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">Quem fez?</span>
-          <select name="personId" className="w-full rounded-2xl border border-slate-300 px-4 py-3">
+          <select name="personId" className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3">
             <option value="">Selecione</option>
             {people.map((person) => (
               <option key={person.id} value={person.id}>
@@ -238,10 +272,14 @@ export function FinancialEntryForm({
           </select>
           <ErrorText message={state.fieldErrors?.personId?.[0]} />
         </label>
+        </Field>
 
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">De onde saiu ou entrou o dinheiro?</span>
-          <select name="accountId" className="w-full rounded-2xl border border-slate-300 px-4 py-3">
+        <Field>
+        <label className="block min-w-0 space-y-2">
+          <span className="text-sm font-medium text-slate-700">
+            {isSaved ? "De onde saiu esse dinheiro?" : "De onde saiu ou entrou o dinheiro?"}
+          </span>
+          <select name="accountId" className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3">
             <option value="">Selecione</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
@@ -251,18 +289,24 @@ export function FinancialEntryForm({
           </select>
           <ErrorText message={state.fieldErrors?.accountId?.[0]} />
         </label>
+        </Field>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">
-            {selectedType === EntryType.INCOME ? "Categoria da entrada" : "Categoria da saída"}
+            {isIncome
+              ? "Categoria da entrada"
+              : isSaved
+                ? "Onde você guardou esse dinheiro?"
+                : "Categoria da saída"}
           </span>
           <select
             name="categoryId"
             value={selectedCategoryId}
             onChange={(event) => setSelectedCategoryId(event.target.value)}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
           >
             <option value="">Selecione</option>
             {visibleCategories.map((category) => (
@@ -272,21 +316,28 @@ export function FinancialEntryForm({
             ))}
           </select>
           <p className="text-xs text-slate-500">
-            {selectedType === EntryType.INCOME
+            {isIncome
               ? "Escolha a categoria que melhor representa essa entrada."
-              : "Escolha a categoria que melhor representa esse gasto."}
+              : isSaved
+                ? "Escolha o destino em que esse dinheiro foi guardado."
+                : "Escolha a categoria que melhor representa esse gasto."}
           </p>
           <ErrorText message={state.fieldErrors?.categoryId?.[0]} />
         </label>
+        </Field>
 
-        {selectedType === EntryType.EXPENSE ? (
-          <>
-            <label className="space-y-2">
+        {!isExpense ? <div className="hidden md:block" aria-hidden="true" /> : null}
+      </div>
+
+      {isExpense ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Field>
+            <label className="block min-w-0 space-y-2">
               <span className="text-sm font-medium text-slate-700">Como você pagou?</span>
               <select
                 value={selectedPaymentMethod}
                 onChange={(event) => setSelectedPaymentMethod(event.target.value as PaymentMethod)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
               >
                 {paymentMethods.map((paymentMethodOption) => (
                   <option key={paymentMethodOption.id} value={paymentMethodOption.paymentMethod}>
@@ -296,13 +347,15 @@ export function FinancialEntryForm({
               </select>
               <ErrorText message={state.fieldErrors?.paymentMethod?.[0]} />
             </label>
+          </Field>
 
-            <label className="space-y-2">
+          <Field>
+            <label className="block min-w-0 space-y-2">
               <span className="text-sm font-medium text-slate-700">Esse gasto já foi pago?</span>
               <select
                 value={selectedSettlementStatus}
                 onChange={(event) => setSelectedSettlementStatus(event.target.value as SettlementStatus)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
               >
                 <option value={SettlementStatus.PENDING}>Pendente</option>
                 <option value={SettlementStatus.SETTLED}>Pago</option>
@@ -311,39 +364,43 @@ export function FinancialEntryForm({
                 Pix, débito e dinheiro normalmente já entram como pagos.
               </p>
             </label>
+          </Field>
 
-            <label className="space-y-2">
+          <Field>
+            <label className="block min-w-0 space-y-2">
               <span className="text-sm font-medium text-slate-700">Esse gasto é fixo?</span>
               <select
                 value={selectedFrequencyProfile}
                 onChange={(event) =>
                   setSelectedFrequencyProfile(event.target.value as EntryFrequencyProfile)
                 }
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
               >
                 <option value={EntryFrequencyProfile.FIXED}>Sim, acontece com frequência</option>
-                <option value={EntryFrequencyProfile.VARIABLE}>Nao, foi pontual</option>
+                <option value={EntryFrequencyProfile.VARIABLE}>Não, foi pontual</option>
               </select>
               <ErrorText message={state.fieldErrors?.frequencyProfile?.[0]} />
             </label>
-          </>
-        ) : null}
-      </div>
+          </Field>
+        </div>
+      ) : null}
 
-      <div className={`grid gap-4 ${selectedType === EntryType.EXPENSE ? "md:grid-cols-[1fr,220px]" : ""}`}>
-        <label className="space-y-2">
+      <div className={`grid grid-cols-1 gap-4 ${isExpense ? "xl:grid-cols-[minmax(0,1fr),240px]" : ""}`}>
+        <Field>
+        <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">Quer adicionar algum detalhe?</span>
           <textarea
             name="notes"
             rows={4}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+            className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
             placeholder="Ex.: compra da semana, presente, pagamento do cliente"
           />
           <ErrorText message={state.fieldErrors?.notes?.[0]} />
         </label>
+        </Field>
 
-        {selectedType === EntryType.EXPENSE ? (
-          <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        {isExpense ? (
+          <div className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
               <input
                 type="checkbox"
@@ -368,7 +425,7 @@ export function FinancialEntryForm({
                 min="0"
                 value={installmentCount}
                 onChange={(event) => setInstallmentCount(event.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full min-w-0 rounded-2xl border border-slate-300 px-4 py-3"
                 disabled={!isInstallment}
               />
               <ErrorText message={state.fieldErrors?.installmentCount?.[0]} />

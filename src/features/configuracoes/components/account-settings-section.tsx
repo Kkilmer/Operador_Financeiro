@@ -10,8 +10,8 @@ type AccountListItem = {
   id: string;
   name: string;
   type: AccountType;
-  initialBalance: unknown;
-  creditLimit: unknown;
+  initialBalance: number | null;
+  creditLimit: number | null;
   closingDay: number | null;
   dueDay: number | null;
   isActive: boolean;
@@ -38,15 +38,6 @@ type AccountSettingsSectionProps = {
   accounts: AccountListItem[];
   people: PersonOption[];
 };
-
-function parseDecimal(value: unknown) {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-
-  const normalized = typeof value === "object" && value && "toString" in value ? Number(value.toString()) : Number(value);
-  return Number.isFinite(normalized) ? normalized : null;
-}
 
 export function AccountSettingsSection({ accounts, people }: AccountSettingsSectionProps) {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
@@ -87,8 +78,8 @@ export function AccountSettingsSection({ accounts, people }: AccountSettingsSect
                     institutionName: editingAccount.institution?.name ?? null,
                     ownerPersonId: editingAccount.ownerPerson?.id ?? "",
                     type: editingAccount.type,
-                    initialBalance: parseDecimal(editingAccount.initialBalance),
-                    creditLimit: parseDecimal(editingAccount.creditLimit),
+                    initialBalance: editingAccount.initialBalance,
+                    creditLimit: editingAccount.creditLimit,
                     closingDay: editingAccount.closingDay,
                     dueDay: editingAccount.dueDay,
                     isActive: editingAccount.isActive,

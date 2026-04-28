@@ -11,8 +11,8 @@ type AccountListItem = {
   id: string;
   name: string;
   type: AccountType;
-  initialBalance: unknown;
-  creditLimit: unknown;
+  initialBalance: number | null;
+  creditLimit: number | null;
   closingDay: number | null;
   dueDay: number | null;
   isActive: boolean;
@@ -35,15 +35,13 @@ type AccountListProps = {
   onEdit: (account: AccountListItem) => void;
 };
 
-function formatDecimal(value: unknown) {
-  if (value === null || value === undefined || value === "") {
+function formatDecimal(value: number | null) {
+  if (value === null || value === undefined) {
     return "-";
   }
 
-  const normalized = typeof value === "object" && value && "toString" in value ? Number(value.toString()) : Number(value);
-
-  return Number.isFinite(normalized)
-    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(normalized)
+  return Number.isFinite(value)
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)
     : "-";
 }
 
