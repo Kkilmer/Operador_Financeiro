@@ -15,7 +15,7 @@ export function BalanceCard({ value }: BalanceCardProps) {
         positive ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50",
       )}
     >
-      <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Saldo do mes</p>
+      <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Saldo do mês</p>
       <p
         className={cn(
           "mt-3 text-3xl font-semibold tracking-tight lg:text-4xl",
@@ -25,7 +25,7 @@ export function BalanceCard({ value }: BalanceCardProps) {
         {formatCurrency(value)}
       </p>
       <p className="mt-2 text-sm text-slate-500">
-        {positive ? "Voce ainda esta no positivo." : "Seu mes esta negativo ate agora."}
+        {positive ? "Você ainda está no positivo." : "Seu mês está negativo até agora."}
       </p>
     </section>
   );

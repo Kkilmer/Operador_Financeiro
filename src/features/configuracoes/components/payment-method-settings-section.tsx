@@ -36,7 +36,7 @@ export function PaymentMethodSettingsSection({
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Formas de pagamento</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Controle as opcoes disponiveis em novos lancamentos sem apagar o historico.
+            Controle as opções disponíveis em novos lançamentos sem apagar o histórico.
           </p>
         </div>
         <button

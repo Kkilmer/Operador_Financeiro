@@ -30,7 +30,7 @@ function typeLabel(type: CategoryType) {
     case CategoryType.INCOME:
       return "Entrada";
     case CategoryType.EXPENSE:
-      return "Saida";
+      return "Saída";
     case CategoryType.BOTH:
       return "Ambos";
     default:
@@ -51,8 +51,8 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
             <th className="py-3 pr-4 font-medium">Tipo</th>
             <th className="py-3 pr-4 font-medium">Cor</th>
             <th className="py-3 pr-4 font-medium">Status</th>
-            <th className="py-3 pr-4 font-medium">Uso no historico</th>
-            <th className="py-3 font-medium">Acoes</th>
+            <th className="py-3 pr-4 font-medium">Uso no histórico</th>
+            <th className="py-3 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -68,14 +68,14 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
                 </div>
               </td>
               <td className="py-4 pr-4 text-slate-700">{typeLabel(category.type)}</td>
-              <td className="py-4 pr-4 text-slate-700">{category.color ?? "Padrao"}</td>
+              <td className="py-4 pr-4 text-slate-700">{category.color ?? "Padrão"}</td>
               <td className="py-4 pr-4">
                 <Badge tone={category.isActive ? "emerald" : "slate"}>
                   {category.isActive ? "Ativa" : "Inativa"}
                 </Badge>
               </td>
               <td className="py-4 pr-4 text-slate-700">
-                {category._count.entries + category._count.purchases} vinculos
+                {category._count.entries + category._count.purchases} vínculos
               </td>
               <td className="py-4">
                 <div className="flex gap-2">

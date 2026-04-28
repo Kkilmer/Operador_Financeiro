@@ -52,17 +52,17 @@ function accountTypeLabel(type: AccountType) {
     case AccountType.CHECKING:
       return "Conta corrente";
     case AccountType.SAVINGS:
-      return "Conta poupanca";
+      return "Conta poupança";
     case AccountType.DIGITAL_WALLET:
       return "Carteira digital";
     case AccountType.CASH:
-      return "Dinheiro fisico";
+      return "Dinheiro físico";
     case AccountType.CREDIT_CARD:
-      return "Cartao de credito";
+      return "Cartão de crédito";
     case AccountType.DEBIT_CARD:
-      return "Cartao de debito";
+      return "Cartão de débito";
     case AccountType.MULTIPLE_CARD:
-      return "Cartao multiplo";
+      return "Cartão múltiplo";
     case AccountType.INVESTMENT:
       return "Investimento";
     default:
@@ -82,11 +82,11 @@ export function AccountList({ accounts, onEdit }: AccountListProps) {
             <th className="py-3 pr-4 font-medium">Nome</th>
             <th className="py-3 pr-4 font-medium">Titular</th>
             <th className="py-3 pr-4 font-medium">Tipo</th>
-            <th className="py-3 pr-4 font-medium">Instituicao</th>
+            <th className="py-3 pr-4 font-medium">Instituição</th>
             <th className="py-3 pr-4 font-medium">Saldo/Limite</th>
             <th className="py-3 pr-4 font-medium">Status</th>
-            <th className="py-3 pr-4 font-medium">Uso no historico</th>
-            <th className="py-3 font-medium">Acoes</th>
+            <th className="py-3 pr-4 font-medium">Uso no histórico</th>
+            <th className="py-3 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -108,7 +108,7 @@ export function AccountList({ accounts, onEdit }: AccountListProps) {
                 </Badge>
               </td>
               <td className="py-4 pr-4 text-slate-700">
-                {account._count.entries + account._count.purchases} vinculos
+                {account._count.entries + account._count.purchases} vínculos
               </td>
               <td className="py-4">
                 <div className="flex gap-2">
@@ -143,4 +143,3 @@ export function AccountList({ accounts, onEdit }: AccountListProps) {
     </div>
   );
 }
-

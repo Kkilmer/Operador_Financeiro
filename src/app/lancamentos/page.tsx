@@ -15,10 +15,10 @@ export default async function FinancialEntriesPage() {
     <main className="space-y-6">
       <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Lancamentos</p>
+          <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Lançamentos</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900">{formatMonthYear()}</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Lista os lancamentos do mes atual com destaque para pessoa, conta e parcelamento.
+            Lista os lançamentos do mês atual com destaque para pessoa, conta e parcelamento.
           </p>
         </div>
 
@@ -26,27 +26,27 @@ export default async function FinancialEntriesPage() {
           href="/lancamentos/novo"
           className="rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
         >
-          Novo lancamento
+          Novo lançamento
         </Link>
       </section>
 
       <SectionCard
-        title="Movimentacoes do mes"
-        description="No MVP, a listagem ja abre no mes atual para reduzir cliques."
+        title="Movimentações do mês"
+        description="No MVP, a listagem já abre no mês atual para reduzir cliques."
       >
         {entries.length === 0 ? (
           <EmptyState
-            title="Sem movimentacoes ainda"
-            description="Assim que voce registrar entradas e saidas, elas aparecerao aqui com as informacoes de pessoa, conta e categoria."
+            title="Sem movimentações ainda"
+            description="Assim que você registrar entradas e saídas, elas aparecerão aqui com as informações de pessoa, conta e categoria."
             ctaHref="/lancamentos/novo"
-            ctaLabel="Criar lancamento"
+            ctaLabel="Criar lançamento"
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
               <thead>
                 <tr className="text-left text-slate-500">
-                  <th className="py-3 pr-4 font-medium">Descricao</th>
+                  <th className="py-3 pr-4 font-medium">Descrição</th>
                   <th className="py-3 pr-4 font-medium">Pessoa</th>
                   <th className="py-3 pr-4 font-medium">Conta</th>
                   <th className="py-3 pr-4 font-medium">Categoria</th>
@@ -71,7 +71,7 @@ export default async function FinancialEntriesPage() {
                     <td className="py-4 pr-4 text-slate-700">{entry.category?.name ?? "Sem categoria"}</td>
                     <td className="py-4 pr-4">
                       <Badge tone={entry.type === EntryType.INCOME ? "emerald" : "slate"}>
-                        {entry.type === EntryType.INCOME ? "Entrada" : "Saida"}
+                        {entry.type === EntryType.INCOME ? "Entrada" : "Saída"}
                       </Badge>
                     </td>
                     <td className="py-4 pr-0 font-semibold text-slate-900">

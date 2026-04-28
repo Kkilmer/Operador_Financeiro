@@ -41,7 +41,7 @@ export async function updateCategoryAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe outra categoria com esse nome e tipo.",
+      message: "Já existe outra categoria com esse nome e tipo.",
     };
   }
 

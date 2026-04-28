@@ -17,7 +17,8 @@ export type DashboardRecentEntry = {
   type: "INCOME" | "EXPENSE";
   personName: string;
   accountName: string;
-  eventDate: string;
+  categoryName: string | null;
+  eventDateLabel: string;
   isInstallment: boolean;
 };
 

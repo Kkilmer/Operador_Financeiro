@@ -24,9 +24,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <section className="flex flex-col gap-4 rounded-3xl bg-ink-950 px-6 py-6 text-white xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Home</p>
-          <h1 className="mt-2 text-3xl font-semibold">Resumo do mes</h1>
+          <h1 className="mt-2 text-3xl font-semibold">Resumo do mês</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Veja rapidamente saldo, entradas, saidas, parcelas do mes e os ultimos lancamentos.
+            Veja rapidamente saldo, entradas, saídas, parcelas do mês e os últimos lançamentos.
           </p>
         </div>
 
@@ -37,13 +37,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               href="/lancamentos/novo"
               className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
             >
-              Novo lancamento
+              Novo lançamento
             </Link>
             <Link
               href="/lancamentos"
               className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
             >
-              Ver lancamentos
+              Ver lançamentos
             </Link>
           </div>
         </div>
@@ -52,8 +52,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <section className="grid gap-4 xl:grid-cols-[1.35fr,0.65fr]">
         <BalanceCard value={summary.balance} />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-          <SummaryCard label="Entradas do mes" value={summary.totalIncome} tone="positive" />
-          <SummaryCard label="Saidas do mes" value={summary.totalExpense} tone="negative" />
+          <SummaryCard label="Entradas do mês" value={summary.totalIncome} tone="positive" />
+          <SummaryCard label="Saídas do mês" value={summary.totalExpense} tone="negative" />
         </div>
       </section>
 
@@ -64,15 +64,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         />
 
         <SectionCard
-          title="Ultimos lancamentos"
-          description="Os registros mais recentes do mes filtrado."
+          title="Últimos lançamentos"
+          description="Os registros mais recentes do mês filtrado."
         >
           {summary.recentEntries.length === 0 ? (
             <EmptyState
-              title="Nenhum lancamento neste mes"
-              description="Crie o primeiro lancamento para comecar a acompanhar seu resumo financeiro."
+              title="Nenhum lançamento neste mês"
+              description="Crie o primeiro lançamento para começar a acompanhar seu resumo financeiro."
               ctaHref="/lancamentos/novo"
-              ctaLabel="Criar lancamento"
+              ctaLabel="Criar lançamento"
             />
           ) : (
             <RecentTransactions items={summary.recentEntries} />

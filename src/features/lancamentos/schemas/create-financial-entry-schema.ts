@@ -2,35 +2,68 @@ import { PaymentMethod, EntryType, EntryFrequencyProfile, SettlementStatus } fro
 import { z } from "zod";
 
 const positiveMoneyMessage = "Informe um valor maior que zero.";
+const emptyStringToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => (value === "" ? undefined : value), schema.optional());
 
 export const createFinancialEntrySchema = z
   .object({
-    description: z.string().trim().min(1, "Informe a descricao do lancamento."),
+    description: z.string().trim().min(1, "Preencha este campo para continuar."),
     amount: z.coerce.number().positive(positiveMoneyMessage),
-    eventDate: z.string().min(1, "Informe a data do lancamento."),
+    eventDate: z.string().min(1, "Informe a data do lançamento."),
     type: z.nativeEnum(EntryType, {
-      errorMap: () => ({ message: "Selecione se o lancamento e entrada ou saida." }),
+      errorMap: () => ({ message: "Escolha se este lançamento é uma entrada ou uma saída." }),
     }),
-    personId: z.string().trim().min(1, "Selecione a pessoa responsavel."),
-    accountId: z.string().trim().min(1, "Selecione a conta ou cartao."),
+    personId: z.string().trim().min(1, "Escolha quem fez este lançamento."),
+    accountId: z.string().trim().min(1, "Escolha a conta ou o cartão usado."),
     categoryId: z.string().trim().optional().or(z.literal("")),
-    paymentMethod: z.nativeEnum(PaymentMethod, {
-      errorMap: () => ({ message: "Selecione a forma de pagamento." }),
-    }),
-    notes: z.string().trim().max(500, "A observacao pode ter no maximo 500 caracteres.").optional().or(z.literal("")),
-    settlementStatus: z.nativeEnum(SettlementStatus).default(SettlementStatus.PENDING),
-    frequencyProfile: z.nativeEnum(EntryFrequencyProfile, {
-      errorMap: () => ({ message: "Informe se o gasto e fixo ou variavel." }),
-    }),
+    paymentMethod: emptyStringToUndefined(
+      z.nativeEnum(PaymentMethod, {
+        errorMap: () => ({ message: "Escolha como esse pagamento foi feito." }),
+      }),
+    ),
+    notes: z.string().trim().max(500, "Esse detalhe pode ter no máximo 500 caracteres.").optional().or(z.literal("")),
+    settlementStatus: emptyStringToUndefined(z.nativeEnum(SettlementStatus)),
+    frequencyProfile: emptyStringToUndefined(
+      z.nativeEnum(EntryFrequencyProfile, {
+        errorMap: () => ({ message: "Informe se o gasto é fixo ou pontual." }),
+      }),
+    ),
     isInstallment: z.coerce.boolean().default(false),
     installmentCount: z.coerce.number().int().min(0).default(0),
   })
   .superRefine((data, ctx) => {
-    if (data.type === EntryType.EXPENSE && !data.categoryId) {
+    if (!data.categoryId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["categoryId"],
-        message: "Categoria e obrigatoria para saidas.",
+        message:
+          data.type === EntryType.INCOME
+            ? "Escolha uma categoria para a entrada."
+            : "Escolha uma categoria para a saída.",
+      });
+    }
+
+    if (data.type === EntryType.EXPENSE && !data.paymentMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["paymentMethod"],
+        message: "Escolha como esse pagamento foi feito.",
+      });
+    }
+
+    if (data.type === EntryType.EXPENSE && !data.settlementStatus) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["settlementStatus"],
+        message: "Informe se esse gasto já foi pago.",
+      });
+    }
+
+    if (data.type === EntryType.EXPENSE && !data.frequencyProfile) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["frequencyProfile"],
+        message: "Informe se esse gasto é fixo ou pontual.",
       });
     }
 
@@ -38,7 +71,7 @@ export const createFinancialEntrySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["paymentMethod"],
-        message: "Entradas nao podem ser registradas como credito parcelado.",
+        message: "Entradas não podem ser registradas como parceladas.",
       });
     }
 
@@ -46,7 +79,7 @@ export const createFinancialEntrySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["isInstallment"],
-        message: "Apenas saidas podem ser parceladas.",
+        message: "Só saídas podem ser parceladas.",
       });
     }
 
@@ -54,7 +87,7 @@ export const createFinancialEntrySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["paymentMethod"],
-        message: "Compras parceladas devem usar a forma de pagamento credito parcelado.",
+        message: "Para parcelar, escolha a opção de pagamento parcelado.",
       });
     }
 
@@ -62,7 +95,7 @@ export const createFinancialEntrySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["installmentCount"],
-        message: "Informe pelo menos 2 parcelas para compras parceladas.",
+        message: "Informe pelo menos 2 parcelas.",
       });
     }
 
@@ -70,7 +103,7 @@ export const createFinancialEntrySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["installmentCount"],
-        message: "Quantidade de parcelas so pode ser informada quando o lancamento for parcelado.",
+        message: "Só informe parcelas quando o lançamento for parcelado.",
       });
     }
   });

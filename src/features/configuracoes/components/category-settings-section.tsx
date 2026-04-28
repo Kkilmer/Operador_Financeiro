@@ -38,7 +38,7 @@ export function CategorySettingsSection({
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Categorias</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Cadastre, edite e inative categorias sem apagar o historico financeiro.
+            Cadastre, edite e inative categorias sem apagar o histórico financeiro.
           </p>
         </div>
         <button

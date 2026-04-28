@@ -33,6 +33,48 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-red-600">{message}</p>;
 }
 
+function paymentBehaviorLabel(behavior: PaymentMethodBehavior) {
+  switch (behavior) {
+    case PaymentMethodBehavior.PIX:
+      return "Pix";
+    case PaymentMethodBehavior.DEBITO:
+      return "Débito";
+    case PaymentMethodBehavior.CREDITO_A_VISTA:
+      return "Crédito à vista";
+    case PaymentMethodBehavior.CREDITO_PARCELADO:
+      return "Crédito parcelado";
+    case PaymentMethodBehavior.DINHEIRO:
+      return "Dinheiro";
+    case PaymentMethodBehavior.TRANSFERENCIA:
+      return "Transferência";
+    case PaymentMethodBehavior.BOLETO:
+      return "Boleto";
+    default:
+      return "Outro";
+  }
+}
+
+function paymentMethodLabel(paymentMethod: PaymentMethod) {
+  switch (paymentMethod) {
+    case PaymentMethod.PIX:
+      return "Pix";
+    case PaymentMethod.DEBIT:
+      return "Débito";
+    case PaymentMethod.CREDIT_SINGLE:
+      return "Crédito à vista";
+    case PaymentMethod.CREDIT_INSTALLMENT:
+      return "Crédito parcelado";
+    case PaymentMethod.CASH:
+      return "Dinheiro";
+    case PaymentMethod.BANK_TRANSFER:
+      return "Transferência";
+    case PaymentMethod.BOLETO:
+      return "Boleto";
+    default:
+      return "Outro";
+  }
+}
+
 export function PaymentMethodForm({
   initialValues,
   onCancel,
@@ -57,7 +99,7 @@ export function PaymentMethodForm({
             {initialValues?.id ? "Editar forma de pagamento" : "Adicionar forma de pagamento"}
           </h3>
           <p className="text-sm text-slate-500">
-            Itens inativos saem dos novos lancamentos, mas continuam aparecendo no historico.
+            Itens inativos saem dos novos lançamentos, mas continuam aparecendo no histórico.
           </p>
         </div>
         {onCancel ? (
@@ -106,7 +148,7 @@ export function PaymentMethodForm({
           >
             {Object.values(PaymentMethodBehavior).map((behavior) => (
               <option key={behavior} value={behavior}>
-                {behavior}
+                {paymentBehaviorLabel(behavior)}
               </option>
             ))}
           </select>
@@ -122,7 +164,7 @@ export function PaymentMethodForm({
           >
             {Object.values(PaymentMethod).map((paymentMethod) => (
               <option key={paymentMethod} value={paymentMethod}>
-                {paymentMethod}
+                {paymentMethodLabel(paymentMethod)}
               </option>
             ))}
           </select>
@@ -148,7 +190,7 @@ export function PaymentMethodForm({
             defaultChecked={initialValues?.immediateSettlement ?? false}
             className="size-4 rounded"
           />
-          Liquidacao imediata
+          Liquidação imediata
         </label>
 
         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -169,7 +211,7 @@ export function PaymentMethodForm({
           type="submit"
           className="rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
         >
-          {initialValues?.id ? "Salvar alteracoes" : "Criar forma de pagamento"}
+          {initialValues?.id ? "Salvar alterações" : "Criar forma de pagamento"}
         </button>
       </div>
     </form>

@@ -16,8 +16,8 @@ export function InstallmentsCard({
     <section className="rounded-2xl bg-white p-4 shadow-panel">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-lg font-semibold text-slate-950">Parcelas do mes</p>
-          <p className="mt-1 text-sm text-slate-500">Compromissos que ja pesam no mes atual.</p>
+          <p className="text-lg font-semibold text-slate-950">Parcelas do mês</p>
+          <p className="mt-1 text-sm text-slate-500">Compromissos que já pesam no mês atual.</p>
         </div>
         <p className="text-lg font-semibold text-slate-900">{formatCurrency(totalInstallments)}</p>
       </div>
@@ -25,7 +25,7 @@ export function InstallmentsCard({
       <div className="mt-4 space-y-3">
         {items.length === 0 ? (
           <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-500">
-            Nenhuma parcela para este mes.
+            Nenhuma parcela para este mês.
           </div>
         ) : (
           items.map((item) => (

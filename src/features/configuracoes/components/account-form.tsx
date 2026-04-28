@@ -47,17 +47,17 @@ function accountTypeLabel(type: AccountType) {
     case AccountType.CHECKING:
       return "Conta corrente";
     case AccountType.SAVINGS:
-      return "Conta poupanca";
+      return "Conta poupança";
     case AccountType.DIGITAL_WALLET:
       return "Carteira digital";
     case AccountType.CASH:
-      return "Dinheiro fisico";
+      return "Dinheiro físico";
     case AccountType.CREDIT_CARD:
-      return "Cartao de credito";
+      return "Cartão de crédito";
     case AccountType.DEBIT_CARD:
-      return "Cartao de debito";
+      return "Cartão de débito";
     case AccountType.MULTIPLE_CARD:
-      return "Cartao multiplo";
+      return "Cartão múltiplo";
     case AccountType.INVESTMENT:
       return "Investimento";
     default:
@@ -83,10 +83,10 @@ export function AccountForm({ people, initialValues, onCancel }: AccountFormProp
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
-            {initialValues?.id ? "Editar conta ou cartao" : "Adicionar conta ou cartao"}
+            {initialValues?.id ? "Editar conta ou cartão" : "Adicionar conta ou cartão"}
           </h3>
           <p className="text-sm text-slate-500">
-            Itens inativos saem dos novos lancamentos, mas continuam no historico.
+            Itens inativos saem dos novos lançamentos, mas continuam no histórico.
           </p>
         </div>
         {onCancel ? (
@@ -127,7 +127,7 @@ export function AccountForm({ people, initialValues, onCancel }: AccountFormProp
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Instituicao ou banco</span>
+          <span className="text-sm font-medium text-slate-700">Instituição ou banco</span>
           <input
             name="institutionName"
             defaultValue={initialValues?.institutionName ?? ""}
@@ -192,7 +192,7 @@ export function AccountForm({ people, initialValues, onCancel }: AccountFormProp
             step="0.01"
             defaultValue={initialValues?.creditLimit ?? ""}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            placeholder="Opcional para cartoes de credito"
+            placeholder="Opcional para cartões de crédito"
           />
           <FieldError message={state.fieldErrors?.creditLimit?.[0]} />
         </label>
@@ -233,7 +233,7 @@ export function AccountForm({ people, initialValues, onCancel }: AccountFormProp
           defaultChecked={initialValues?.isActive ?? true}
           className="size-4 rounded"
         />
-        Conta ou cartao ativo
+        Conta ou cartão ativa
       </label>
 
       <div className="flex justify-end">
@@ -241,10 +241,9 @@ export function AccountForm({ people, initialValues, onCancel }: AccountFormProp
           type="submit"
           className="rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
         >
-          {initialValues?.id ? "Salvar alteracoes" : "Criar conta ou cartao"}
+          {initialValues?.id ? "Salvar alterações" : "Criar conta ou cartão"}
         </button>
       </div>
     </form>
   );
 }
-

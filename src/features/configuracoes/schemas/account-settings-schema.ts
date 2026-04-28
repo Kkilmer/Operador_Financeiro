@@ -18,9 +18,9 @@ export const accountSettingsSchema = z
     id: z.string().trim().optional(),
     name: z.string().trim().min(2, "Informe um nome com pelo menos 2 caracteres."),
     institutionName: z.string().trim().optional().or(z.literal("")),
-    ownerPersonId: z.string().trim().min(1, "Selecione o titular da conta ou cartao."),
+    ownerPersonId: z.string().trim().min(1, "Selecione o titular da conta ou cartão."),
     type: z.nativeEnum(AccountType, {
-      errorMap: () => ({ message: "Selecione o tipo da conta ou cartao." }),
+      errorMap: () => ({ message: "Selecione o tipo da conta ou cartão." }),
     }),
     initialBalance: z.coerce.number().min(0, "O saldo inicial deve ser zero ou positivo.").default(0),
     creditLimit: z.coerce.number().min(0, "O limite deve ser zero ou positivo.").optional(),
@@ -33,7 +33,7 @@ export const accountSettingsSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["institutionName"],
-        message: "Informe a instituicao do cartao.",
+        message: "Informe a instituição do cartão.",
       });
     }
 
@@ -42,7 +42,7 @@ export const accountSettingsSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["closingDay"],
-          message: "Informe um dia de fechamento valido.",
+          message: "Informe um dia de fechamento válido.",
         });
       }
 
@@ -50,7 +50,7 @@ export const accountSettingsSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["dueDay"],
-          message: "Informe um dia de vencimento valido.",
+          message: "Informe um dia de vencimento válido.",
         });
       }
     }

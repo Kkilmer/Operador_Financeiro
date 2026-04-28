@@ -53,7 +53,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
             {initialValues?.id ? "Editar categoria" : "Adicionar categoria"}
           </h3>
           <p className="text-sm text-slate-500">
-            Categorias inativas saem dos novos lancamentos, mas continuam no historico.
+            Categorias inativas saem dos novos lançamentos, mas continuam no histórico.
           </p>
         </div>
         {onCancel ? (
@@ -101,7 +101,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
           >
             <option value={CategoryType.INCOME}>Entrada</option>
-            <option value={CategoryType.EXPENSE}>Saida</option>
+            <option value={CategoryType.EXPENSE}>Saída</option>
             <option value={CategoryType.BOTH}>Ambos</option>
           </select>
           <FieldError message={state.fieldErrors?.type?.[0]} />
@@ -119,7 +119,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Icone</span>
+          <span className="text-sm font-medium text-slate-700">Ícone</span>
           <input
             name="icon"
             defaultValue={initialValues?.icon ?? ""}
@@ -145,7 +145,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
           type="submit"
           className="rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
         >
-          {initialValues?.id ? "Salvar alteracoes" : "Criar categoria"}
+          {initialValues?.id ? "Salvar alterações" : "Criar categoria"}
         </button>
       </div>
     </form>

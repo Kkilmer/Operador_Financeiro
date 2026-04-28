@@ -47,7 +47,7 @@ export async function updateAccountAction(
   if (!parsed.success || !parsed.data.id) {
     return {
       success: false,
-      message: "Revise os campos da conta ou cartao.",
+      message: "Revise os campos da conta ou cartão.",
       fieldErrors: parsed.success ? undefined : parsed.error.flatten().fieldErrors,
     };
   }
@@ -65,7 +65,7 @@ export async function updateAccountAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe uma conta ou cartao com esse nome para o titular selecionado.",
+      message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
     };
   }
 
@@ -112,7 +112,6 @@ export async function updateAccountAction(
 
   return {
     success: true,
-    message: "Conta ou cartao atualizado com sucesso.",
+    message: "Conta ou cartão atualizado com sucesso.",
   };
 }
-

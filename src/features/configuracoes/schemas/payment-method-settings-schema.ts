@@ -23,7 +23,7 @@ export const paymentMethodSettingsSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["requiresInstallments"],
-        message: "Credito parcelado deve exigir parcelamento.",
+        message: "Crédito parcelado deve exigir parcelamento.",
       });
     }
   });

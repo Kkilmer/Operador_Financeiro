@@ -1,6 +1,7 @@
 import {
   AccountType,
   CategoryType,
+  EntryFrequencyProfile,
   EntryOrigin,
   EntryType,
   InstallmentStatus,
@@ -41,7 +42,16 @@ function splitInstallments(totalAmount: number, installmentCount: number) {
 export async function createFinancialEntryUseCase(input: CreateFinancialEntryInput) {
   const eventDate = normalizeDateInput(input.eventDate);
   const competenceDate = startOfMonth(eventDate);
-  const settlementStatus = resolveSettlementStatus(input.paymentMethod, input.settlementStatus);
+  const paymentMethod =
+    input.type === EntryType.INCOME ? input.paymentMethod ?? PaymentMethod.OTHER : input.paymentMethod!;
+  const frequencyProfile =
+    input.type === EntryType.INCOME
+      ? input.frequencyProfile ?? EntryFrequencyProfile.VARIABLE
+      : input.frequencyProfile!;
+  const settlementStatus =
+    input.type === EntryType.INCOME
+      ? SettlementStatus.SETTLED
+      : resolveSettlementStatus(paymentMethod, input.settlementStatus!);
 
   const [person, account, category] = await Promise.all([
     prisma.person.findUnique({ where: { id: input.personId } }),
@@ -49,19 +59,19 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     input.categoryId ? prisma.category.findUnique({ where: { id: input.categoryId } }) : Promise.resolve(null),
   ]);
   const paymentMethodOption = await prisma.paymentMethodOption.findUnique({
-    where: { paymentMethod: input.paymentMethod },
+    where: { paymentMethod },
   });
 
   if (!person || !person.isActive) {
-    throw new Error("A pessoa selecionada nao esta disponivel para novos lancamentos.");
+    throw new Error("A pessoa escolhida não está disponível para novos lançamentos.");
   }
 
   if (!account || !account.isActive) {
-    throw new Error("A conta ou cartao selecionado nao esta disponivel.");
+    throw new Error("A conta ou cartão escolhido não está disponível.");
   }
 
   if (input.type === EntryType.EXPENSE && !category) {
-    throw new Error("Selecione uma categoria valida para a saida.");
+    throw new Error("Escolha uma categoria válida para a saída.");
   }
 
   if (category) {
@@ -69,32 +79,32 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
       input.type === EntryType.INCOME ? CategoryType.INCOME : CategoryType.EXPENSE;
 
     if (category.type !== expectedCategoryType && category.type !== CategoryType.BOTH) {
-      throw new Error("A categoria selecionada nao combina com o tipo do lancamento.");
+      throw new Error("A categoria escolhida não combina com esse tipo de lançamento.");
     }
 
     if (!category.isActive) {
-      throw new Error("A categoria selecionada esta inativa.");
+      throw new Error("A categoria escolhida está oculta e não pode ser usada agora.");
     }
   }
 
-  if (!paymentMethodOption || !paymentMethodOption.isActive) {
-    throw new Error("A forma de pagamento selecionada esta inativa ou nao existe.");
+  if (input.type === EntryType.EXPENSE && (!paymentMethodOption || !paymentMethodOption.isActive)) {
+    throw new Error("A forma de pagamento escolhida está oculta ou não existe.");
   }
 
   if (
-    input.paymentMethod === PaymentMethod.CREDIT_INSTALLMENT &&
+    paymentMethod === PaymentMethod.CREDIT_INSTALLMENT &&
     account.type !== AccountType.CREDIT_CARD &&
     account.type !== AccountType.MULTIPLE_CARD
   ) {
-    throw new Error("Compras parceladas exigem uma conta do tipo cartao de credito.");
+    throw new Error("Compras parceladas precisam de um cartão de crédito.");
   }
 
   if (
-    (input.paymentMethod === PaymentMethod.CREDIT_SINGLE ||
-      input.paymentMethod === PaymentMethod.CREDIT_INSTALLMENT) &&
+    (paymentMethod === PaymentMethod.CREDIT_SINGLE ||
+      paymentMethod === PaymentMethod.CREDIT_INSTALLMENT) &&
     account.type === AccountType.CASH
   ) {
-    throw new Error("Dinheiro nao pode ser usado com pagamento em credito.");
+    throw new Error("Dinheiro não pode ser usado com pagamento no crédito.");
   }
 
   if (!input.isInstallment) {
@@ -108,10 +118,10 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
         personId: input.personId,
         accountId: input.accountId,
         categoryId: input.categoryId || null,
-        paymentMethod: input.paymentMethod,
+        paymentMethod,
         notes: input.notes || null,
         settlementStatus,
-        frequencyProfile: input.frequencyProfile,
+        frequencyProfile,
         isInstallment: false,
       },
     });
@@ -155,7 +165,7 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
           paymentMethod: PaymentMethod.CREDIT_INSTALLMENT,
           notes: input.notes || null,
           settlementStatus: SettlementStatus.PENDING,
-          frequencyProfile: input.frequencyProfile,
+          frequencyProfile,
           isInstallment: true,
           origin: EntryOrigin.INSTALLMENT_GENERATED,
         },

@@ -37,7 +37,7 @@ export async function createFinancialEntryAction(
   if (!parsed.success) {
     return {
       success: false,
-      message: "Revise os campos destacados e tente novamente.",
+      message: "Confira os campos destacados e tente novamente.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -50,7 +50,7 @@ export async function createFinancialEntryAction(
       message:
         error instanceof Error
           ? error.message
-          : "Nao foi possivel salvar o lancamento agora.",
+          : "Não conseguimos salvar agora. Tente novamente.",
     };
   }
 
@@ -60,7 +60,7 @@ export async function createFinancialEntryAction(
   if (payload.presentation === "sheet") {
     return {
       success: true,
-      message: "Lancamento salvo com sucesso.",
+      message: "Pronto! Seu lançamento foi salvo.",
     };
   }
 

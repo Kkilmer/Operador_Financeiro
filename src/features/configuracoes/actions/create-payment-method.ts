@@ -53,7 +53,7 @@ export async function createPaymentMethodAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe uma forma de pagamento com esse nome ou comportamento interno.",
+      message: "Já existe uma forma de pagamento com esse nome ou comportamento interno.",
     };
   }
 

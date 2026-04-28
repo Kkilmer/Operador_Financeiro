@@ -55,7 +55,7 @@ export async function updatePaymentMethodAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe outra forma de pagamento com esse nome ou comportamento interno.",
+      message: "Já existe outra forma de pagamento com esse nome ou comportamento interno.",
     };
   }
 

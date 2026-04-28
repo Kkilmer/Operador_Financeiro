@@ -3,6 +3,7 @@ import { EntryFrequencyProfile, EntryType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
 import { toMapTotals } from "@/features/dashboard/utils/dashboard-aggregations";
+import { formatMonthYear } from "@/lib/utils/date";
 
 function getReferenceMonthDate(referenceMonth?: string) {
   if (!referenceMonth) {
@@ -29,6 +30,14 @@ function getMonthBounds(referenceMonth?: string) {
 
 function getAmountSum<T extends { _sum: { amount: Prisma.Decimal | null } }>(items: T[]) {
   return items.reduce((sum, item) => sum + Number(item._sum.amount ?? 0), 0);
+}
+
+function formatEntryDate(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 }
 
 export async function getDashboardSummary(referenceMonth?: string): Promise<DashboardSummary> {
@@ -110,7 +119,7 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
     prisma.financialEntry.count({ where }),
     prisma.financialEntry.findMany({
       where,
-      include: { person: true, account: true },
+      include: { person: true, account: true, category: true },
       orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
       take: 5,
     }),
@@ -231,7 +240,8 @@ export async function getDashboardSummary(referenceMonth?: string): Promise<Dash
       type: entry.type,
       personName: entry.person.name,
       accountName: entry.account.name,
-      eventDate: entry.eventDate.toISOString(),
+      categoryName: entry.category?.name ?? null,
+      eventDateLabel: formatEntryDate(entry.eventDate),
       isInstallment: entry.isInstallment,
     })),
   };

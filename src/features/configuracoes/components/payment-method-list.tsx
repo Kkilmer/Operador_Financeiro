@@ -22,6 +22,27 @@ type PaymentMethodListProps = {
   onEdit: (paymentMethod: PaymentMethodListItem) => void;
 };
 
+function paymentBehaviorLabel(behavior: PaymentMethodBehavior) {
+  switch (behavior) {
+    case PaymentMethodBehavior.PIX:
+      return "Pix";
+    case PaymentMethodBehavior.DEBITO:
+      return "Débito";
+    case PaymentMethodBehavior.CREDITO_A_VISTA:
+      return "Crédito à vista";
+    case PaymentMethodBehavior.CREDITO_PARCELADO:
+      return "Crédito parcelado";
+    case PaymentMethodBehavior.DINHEIRO:
+      return "Dinheiro";
+    case PaymentMethodBehavior.TRANSFERENCIA:
+      return "Transferência";
+    case PaymentMethodBehavior.BOLETO:
+      return "Boleto";
+    default:
+      return "Outro";
+  }
+}
+
 export function PaymentMethodList({
   paymentMethods,
   onEdit,
@@ -37,21 +58,21 @@ export function PaymentMethodList({
             <th className="py-3 pr-4 font-medium">Nome</th>
             <th className="py-3 pr-4 font-medium">Comportamento</th>
             <th className="py-3 pr-4 font-medium">Parcelamento</th>
-            <th className="py-3 pr-4 font-medium">Liquidacao</th>
+            <th className="py-3 pr-4 font-medium">Liquidação</th>
             <th className="py-3 pr-4 font-medium">Status</th>
-            <th className="py-3 font-medium">Acoes</th>
+            <th className="py-3 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {paymentMethods.map((paymentMethod) => (
             <tr key={paymentMethod.id}>
               <td className="py-4 pr-4 font-medium text-slate-900">{paymentMethod.name}</td>
-              <td className="py-4 pr-4 text-slate-700">{paymentMethod.behavior}</td>
+              <td className="py-4 pr-4 text-slate-700">{paymentBehaviorLabel(paymentMethod.behavior)}</td>
               <td className="py-4 pr-4 text-slate-700">
                 {paymentMethod.requiresInstallments ? "Sim" : "Nao"}
               </td>
               <td className="py-4 pr-4 text-slate-700">
-                {paymentMethod.immediateSettlement ? "Imediata" : "Nao imediata"}
+                {paymentMethod.immediateSettlement ? "Imediata" : "Não imediata"}
               </td>
               <td className="py-4 pr-4">
                 <Badge tone={paymentMethod.isActive ? "emerald" : "slate"}>

@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils/cn";
 
 const items = [
   { href: "/dashboard", label: "Dashboard", match: "exact" },
-  { href: "/lancamentos", label: "Lancamentos", match: "section" },
+  { href: "/lancamentos", label: "Lançamentos", match: "section" },
   { href: "/parcelas", label: "Parcelas", match: "exact" },
-  { href: "/configuracoes", label: "Configuracoes", match: "exact" },
-  { href: "/lancamentos/novo", label: "Novo lancamento", match: "exact" },
+  { href: "/configuracoes", label: "Configurações", match: "exact" },
+  { href: "/lancamentos/novo", label: "Novo lançamento", match: "exact" },
 ] as const;
 
 export function SidebarNav() {

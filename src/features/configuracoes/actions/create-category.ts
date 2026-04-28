@@ -39,7 +39,7 @@ export async function createCategoryAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe uma categoria com esse nome e tipo.",
+      message: "Já existe uma categoria com esse nome e tipo.",
     };
   }
 

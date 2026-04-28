@@ -46,7 +46,7 @@ export async function createAccountAction(
   if (!parsed.success) {
     return {
       success: false,
-      message: "Revise os campos da conta ou cartao.",
+      message: "Revise os campos da conta ou cartão.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
@@ -61,7 +61,7 @@ export async function createAccountAction(
   if (duplicate) {
     return {
       success: false,
-      message: "Ja existe uma conta ou cartao com esse nome para o titular selecionado.",
+      message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
     };
   }
 
@@ -108,7 +108,6 @@ export async function createAccountAction(
 
   return {
     success: true,
-    message: "Conta ou cartao criado com sucesso.",
+    message: "Conta ou cartão criado com sucesso.",
   };
 }
-

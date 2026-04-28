@@ -15,7 +15,7 @@ export const categorySettingsSchema = z.object({
     .refine((value) => !value || /^#([0-9A-Fa-f]{6})$/.test(value), {
       message: "A cor deve estar no formato hexadecimal, por exemplo #22C55E.",
     }),
-  icon: z.string().trim().max(40, "O icone deve ter no maximo 40 caracteres.").optional().or(z.literal("")),
+  icon: z.string().trim().max(40, "O ícone deve ter no máximo 40 caracteres.").optional().or(z.literal("")),
   isActive: z.coerce.boolean().default(true),
 });
 
