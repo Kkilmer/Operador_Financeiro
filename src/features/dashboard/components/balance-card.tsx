@@ -2,10 +2,12 @@ import { formatCurrency } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/cn";
 
 type BalanceCardProps = {
+  previousBalance: number;
+  currentMonthBalance: number;
   value: number;
 };
 
-export function BalanceCard({ value }: BalanceCardProps) {
+export function BalanceCard({ previousBalance, currentMonthBalance, value }: BalanceCardProps) {
   const positive = value >= 0;
 
   return (
@@ -16,6 +18,7 @@ export function BalanceCard({ value }: BalanceCardProps) {
       )}
     >
       <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Saldo disponível</p>
+      <p className="mt-2 text-sm text-slate-500">Saldo anterior: {formatCurrency(previousBalance)}</p>
       <p
         className={cn(
           "mt-3 text-3xl font-semibold tracking-tight lg:text-4xl",
@@ -29,6 +32,7 @@ export function BalanceCard({ value }: BalanceCardProps) {
           ? "Depois dos gastos e do dinheiro guardado, você ainda está no positivo."
           : "Depois dos gastos e do dinheiro guardado, seu mês está negativo até agora."}
       </p>
+      <p className="mt-1 text-sm text-slate-500">Impacto do mês: {formatCurrency(currentMonthBalance)}</p>
     </section>
   );
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { EntryType, SettlementStatus } from "@prisma/client";
+import { EntryOrigin, EntryType, InstallmentStatus, SettlementStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma/client";
 
@@ -25,7 +25,13 @@ export async function markFinancialEntryAsPaidAction(
     select: {
       id: true,
       type: true,
+      origin: true,
       settlementStatus: true,
+      installment: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
 
@@ -54,11 +60,22 @@ export async function markFinancialEntryAsPaidAction(
     where: { id: financialEntryId },
     data: {
       settlementStatus: SettlementStatus.SETTLED,
+      origin: entry.origin === EntryOrigin.RECURRING_GENERATED ? EntryOrigin.MANUAL : entry.origin,
     },
   });
 
+  if (entry.installment?.id) {
+    await prisma.installment.update({
+      where: { id: entry.installment.id },
+      data: {
+        status: InstallmentStatus.SETTLED,
+      },
+    });
+  }
+
   revalidatePath("/lancamentos");
   revalidatePath("/dashboard");
+  revalidatePath("/parcelas");
 
   return {
     success: true,

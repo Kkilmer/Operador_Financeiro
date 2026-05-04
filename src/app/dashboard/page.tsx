@@ -7,6 +7,8 @@ import { BalanceCard } from "@/features/dashboard/components/balance-card";
 import { CategoryExpensesChart } from "@/features/dashboard/components/category-expenses-chart";
 import { InstallmentsCard } from "@/features/dashboard/components/installments-card";
 import { MonthFilterForm } from "@/features/dashboard/components/month-filter-form";
+import { MonthlyFlowChart } from "@/features/dashboard/components/monthly-flow-chart";
+import { PersonSpendingRankingCard } from "@/features/dashboard/components/person-spending-ranking-card";
 import { RecentTransactions } from "@/features/dashboard/components/recent-transactions";
 import { SavedMoneyCard } from "@/features/dashboard/components/saved-money-card";
 import { getDashboardSummary } from "@/features/dashboard/services/get-dashboard-summary";
@@ -14,12 +16,13 @@ import { getDashboardSummary } from "@/features/dashboard/services/get-dashboard
 type DashboardPageProps = {
   searchParams?: Promise<{
     month?: string;
+    year?: string;
   }>;
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const params = searchParams ? await searchParams : undefined;
-  const summary = await getDashboardSummary(params?.month);
+  const summary = await getDashboardSummary(params?.month, params?.year);
 
   return (
     <main className="space-y-6">
@@ -42,7 +45,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               Novo lançamento
             </Link>
             <Link
-              href="/lancamentos"
+              href={`/lancamentos?month=${summary.referenceMonth}`}
               className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
             >
               Ver lançamentos
@@ -52,8 +55,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.35fr,0.65fr]">
-        <BalanceCard value={summary.balance} />
+        <BalanceCard
+          value={summary.balance}
+          previousBalance={summary.previousBalance}
+          currentMonthBalance={summary.currentMonthBalance}
+        />
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+          <SummaryCard label="Saldo anterior" value={summary.previousBalance} />
           <SummaryCard label="Entradas do mês" value={summary.totalIncome} tone="positive" />
           <SummaryCard label="Saídas do mês" value={summary.totalExpense} tone="negative" />
           <SummaryCard label="Dinheiro guardado" value={summary.totalSaved} />
@@ -69,6 +77,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <InstallmentsCard
           totalInstallments={summary.totalInstallments}
           items={summary.installmentsPreview}
+        />
+        <PersonSpendingRankingCard items={summary.personRanking} />
+      </section>
+
+      <section>
+        <MonthlyFlowChart
+          items={summary.monthlyFlow}
+          chartYear={summary.chartYear}
+          availableYears={summary.availableYears}
+          selectedMonth={summary.referenceMonth}
         />
       </section>
 

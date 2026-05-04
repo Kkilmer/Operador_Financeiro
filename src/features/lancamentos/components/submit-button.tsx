@@ -2,7 +2,15 @@
 
 import { useFormStatus } from "react-dom";
 
-export function SubmitButton() {
+type SubmitButtonProps = {
+  label?: string;
+  pendingLabel?: string;
+};
+
+export function SubmitButton({
+  label = "Salvar lançamento",
+  pendingLabel = "Salvando...",
+}: SubmitButtonProps) {
   const { pending } = useFormStatus();
 
   return (
@@ -11,7 +19,7 @@ export function SubmitButton() {
       disabled={pending}
       className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {pending ? "Salvando..." : "Salvar lançamento"}
+      {pending ? pendingLabel : label}
     </button>
   );
 }

@@ -4,10 +4,14 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
   return {
     greetingName: "Kevin",
     referenceMonth,
+    chartYear: 2026,
+    availableYears: [2025, 2026],
+    previousBalance: 5300,
+    currentMonthBalance: 2419.6,
     totalIncome: 8650,
     totalExpense: 5230.4,
     totalSaved: 1000,
-    balance: 2419.6,
+    balance: 7719.6,
     totalInstallments: 742.5,
     totalFixedExpenses: 2150,
     totalVariableExpenses: 3080.4,
@@ -26,6 +30,10 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
       { label: "Kevin", total: 2740.9 },
       { label: "Isabelle", total: 2489.5 },
     ],
+    personRanking: [
+      { position: 1, name: "Kevin", total: 2740.9, percentage: 52.4 },
+      { position: 2, name: "Isabelle", total: 2489.5, percentage: 47.6 },
+    ],
     spendingByAccount: [
       { label: "Conta Nubank Kevin", total: 1230.4 },
       { label: "Cartao Nubank Kevin", total: 2510.3 },
@@ -37,6 +45,20 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
     spendingByPaymentMethod: [
       { label: "PIX", total: 890.4 },
       { label: "CREDIT_INSTALLMENT", total: 742.5 },
+    ],
+    monthlyFlow: [
+      { monthKey: "2026-01", monthLabel: "jan", income: 6200, expense: 4100, balance: 2100 },
+      { monthKey: "2026-02", monthLabel: "fev", income: 6300, expense: 4520, balance: 1780 },
+      { monthKey: "2026-03", monthLabel: "mar", income: 6400, expense: 4950, balance: 1450 },
+      { monthKey: "2026-04", monthLabel: "abr", income: 8650, expense: 5230.4, balance: 3419.6 },
+      { monthKey: "2026-05", monthLabel: "mai", income: 6880.58, expense: 3200, balance: 3680.58 },
+      { monthKey: "2026-06", monthLabel: "jun", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-07", monthLabel: "jul", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-08", monthLabel: "ago", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-09", monthLabel: "set", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-10", monthLabel: "out", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-11", monthLabel: "nov", income: 0, expense: 0, balance: 0 },
+      { monthKey: "2026-12", monthLabel: "dez", income: 0, expense: 0, balance: 0 },
     ],
     savedEntries: [
       {

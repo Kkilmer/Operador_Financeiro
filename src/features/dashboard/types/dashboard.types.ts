@@ -12,6 +12,21 @@ export type DashboardCategoryExpenseItem = {
   color: string;
 };
 
+export type DashboardPersonRankingItem = {
+  position: number;
+  name: string;
+  total: number;
+  percentage: number;
+};
+
+export type DashboardMonthlyFlowItem = {
+  monthKey: string;
+  monthLabel: string;
+  income: number;
+  expense: number;
+  balance: number;
+};
+
 export type DashboardInstallmentPreview = {
   id: string;
   cardName: string;
@@ -44,6 +59,10 @@ export type DashboardSavedEntry = {
 export type DashboardSummary = {
   greetingName: string;
   referenceMonth: string;
+  chartYear: number;
+  availableYears: number[];
+  previousBalance: number;
+  currentMonthBalance: number;
   totalIncome: number;
   totalExpense: number;
   totalSaved: number;
@@ -55,9 +74,11 @@ export type DashboardSummary = {
   spendingByCategory: DashboardBreakdownItem[];
   categoryExpenses: DashboardCategoryExpenseItem[];
   spendingByPerson: DashboardBreakdownItem[];
+  personRanking: DashboardPersonRankingItem[];
   spendingByAccount: DashboardBreakdownItem[];
   spendingByInstitution: DashboardBreakdownItem[];
   spendingByPaymentMethod: DashboardBreakdownItem[];
+  monthlyFlow: DashboardMonthlyFlowItem[];
   installmentsPreview: DashboardInstallmentPreview[];
   savedEntries: DashboardSavedEntry[];
   recentEntries: DashboardRecentEntry[];
