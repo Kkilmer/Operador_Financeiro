@@ -201,7 +201,7 @@ export function FinancialEntryForm({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div key={`category-section-${selectedType}`} className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field>
         <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">O que foi?</span>
@@ -330,7 +330,10 @@ export function FinancialEntryForm({
       </div>
 
       {isExpense ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div
+          key={`expense-section-${selectedType}`}
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
           <Field>
             <label className="block min-w-0 space-y-2">
               <span className="text-sm font-medium text-slate-700">Como você pagou?</span>
@@ -385,7 +388,10 @@ export function FinancialEntryForm({
         </div>
       ) : null}
 
-      <div className={`grid grid-cols-1 gap-4 ${isExpense ? "xl:grid-cols-[minmax(0,1fr),240px]" : ""}`}>
+      <div
+        key={`notes-section-${selectedType}`}
+        className={`grid grid-cols-1 gap-4 ${isExpense ? "xl:grid-cols-[minmax(0,1fr),240px]" : ""}`}
+      >
         <Field>
         <label className="block min-w-0 space-y-2">
           <span className="text-sm font-medium text-slate-700">Quer adicionar algum detalhe?</span>
