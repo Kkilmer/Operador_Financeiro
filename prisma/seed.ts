@@ -5,6 +5,7 @@ import {
   PaymentMethod,
   PaymentMethodBehavior,
   PrismaClient,
+  UserRole,
 } from "@prisma/client";
 
 import { hashPassword } from "../src/lib/auth/password";
@@ -20,9 +21,21 @@ async function main() {
       data: {
         name: "Kevin",
         email: "kevin@operador.local",
+        role: UserRole.ADMIN,
+        isActive: true,
         passwordHash: await hashPassword("Kevin123!"),
       },
     }));
+
+  if (defaultUser.role !== UserRole.ADMIN || defaultUser.isActive !== true) {
+    await prisma.user.update({
+      where: { id: defaultUser.id },
+      data: {
+        role: UserRole.ADMIN,
+        isActive: true,
+      },
+    });
+  }
 
   const kevin =
     (await prisma.person.findFirst({

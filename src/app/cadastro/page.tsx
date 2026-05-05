@@ -2,7 +2,13 @@ import { redirect } from "next/navigation";
 
 import { registerAction } from "@/features/auth/actions/login";
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
+import { CpfInput } from "@/features/auth/components/cpf-input";
+import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { getCurrentUser } from "@/lib/auth/session";
+
+const initialState: AuthFormState = {
+  success: false,
+};
 
 export default async function RegisterPage() {
   const user = await getCurrentUser();
@@ -19,6 +25,7 @@ export default async function RegisterPage() {
       footerHref="/entrar"
       footerLinkLabel="Entrar"
       action={registerAction}
+      initialState={initialState}
       submitLabel="Criar conta"
       fields={
         <>
@@ -31,6 +38,8 @@ export default async function RegisterPage() {
             <span className="text-sm font-medium text-slate-700">E-mail</span>
             <input name="email" type="email" className="w-full rounded-2xl border border-slate-300 px-4 py-3" />
           </label>
+
+          <CpfInput name="cpf" label="CPF" />
 
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700">Senha</span>

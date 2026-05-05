@@ -1,8 +1,14 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { loginAction } from "@/features/auth/actions/login";
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
+import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { getCurrentUser } from "@/lib/auth/session";
+
+const initialState: AuthFormState = {
+  success: false,
+};
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
@@ -19,6 +25,7 @@ export default async function LoginPage() {
       footerHref="/cadastro"
       footerLinkLabel="Criar conta"
       action={loginAction}
+      initialState={initialState}
       submitLabel="Entrar"
       fields={
         <>
@@ -41,6 +48,15 @@ export default async function LoginPage() {
               placeholder="Sua senha"
             />
           </label>
+
+          <div className="text-right">
+            <Link
+              href="/esqueci-senha"
+              className="text-sm font-medium text-brand-700 transition hover:text-brand-600"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
         </>
       }
     />

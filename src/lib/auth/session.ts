@@ -8,6 +8,19 @@ import { prisma } from "@/lib/prisma/client";
 export const SESSION_COOKIE_NAME = "operador_session";
 const SESSION_DURATION_IN_DAYS = 30;
 
+export type SafeCurrentUser = {
+  id: string;
+  name: string;
+  email: string;
+  cpf: string | null;
+  role: "ADMIN" | "USER";
+  isActive: boolean;
+  lastLoginAt: Date | null;
+  mustChangePassword: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 function getExpiryDate() {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_IN_DAYS);
@@ -64,8 +77,21 @@ export async function getCurrentUser() {
         gt: new Date(),
       },
     },
-    include: {
-      user: true,
+    select: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          cpf: true,
+          role: true,
+          isActive: true,
+          lastLoginAt: true,
+          mustChangePassword: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
@@ -89,5 +115,20 @@ export async function requireCurrentUser() {
 
 export async function requireCurrentUserId() {
   const user = await requireCurrentUser();
+  return user.id;
+}
+
+export async function requireAdminUser() {
+  const user = await requireCurrentUser();
+
+  if (user.role !== "ADMIN") {
+    redirect("/dashboard");
+  }
+
+  return user;
+}
+
+export async function requireAdminUserId() {
+  const user = await requireAdminUser();
   return user.id;
 }

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
 
 import { hashPassword } from "../src/lib/auth/password";
 
@@ -19,9 +19,21 @@ async function main() {
       data: {
         name,
         email,
+        role: UserRole.ADMIN,
+        isActive: true,
         passwordHash: await hashPassword(password),
       },
     }));
+
+  if (existingUser && (existingUser.role !== UserRole.ADMIN || existingUser.isActive !== true)) {
+    await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
+        role: UserRole.ADMIN,
+        isActive: true,
+      },
+    });
+  }
 
   const [people, accounts, categories, paymentMethods, entries, purchases, installments] = await Promise.all([
     prisma.person.updateMany({

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
-import { AuthFormState } from "@/features/auth/actions/login";
+import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { SubmitButton } from "@/features/lancamentos/components/submit-button";
 
 type AuthFormShellProps = {
@@ -15,10 +15,8 @@ type AuthFormShellProps = {
   action: (prevState: AuthFormState, formData: FormData) => Promise<AuthFormState>;
   fields: React.ReactNode;
   submitLabel: string;
-};
-
-const initialState: AuthFormState = {
-  success: false,
+  pendingLabel?: string;
+  initialState: AuthFormState;
 };
 
 export function AuthFormShell({
@@ -30,6 +28,8 @@ export function AuthFormShell({
   action,
   fields,
   submitLabel,
+  pendingLabel,
+  initialState,
 }: AuthFormShellProps) {
   const [state, formAction] = useActionState(action, initialState);
 
@@ -51,7 +51,11 @@ export function AuthFormShell({
             </div>
           ) : null}
 
-          <SubmitButton label={submitLabel} pendingLabel="Entrando..." className="w-full justify-center" />
+          <SubmitButton
+            label={submitLabel}
+            pendingLabel={pendingLabel ?? "Entrando..."}
+            className="w-full justify-center"
+          />
         </form>
 
         <p className="mt-4 text-sm text-slate-500">
