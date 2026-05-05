@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { categorySettingsSchema } from "@/features/configuracoes/schemas/category-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -10,6 +11,8 @@ export async function updateCategoryAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     id: formData.get("id"),
     name: formData.get("name"),
@@ -31,6 +34,7 @@ export async function updateCategoryAction(
 
   const duplicate = await prisma.category.findFirst({
     where: {
+      userId,
       id: { not: parsed.data.id },
       name: parsed.data.name,
       type: parsed.data.type,
@@ -45,8 +49,8 @@ export async function updateCategoryAction(
     };
   }
 
-  await prisma.category.update({
-    where: { id: parsed.data.id },
+  const updated = await prisma.category.updateMany({
+    where: { id: parsed.data.id, userId },
     data: {
       name: parsed.data.name,
       type: parsed.data.type,
@@ -55,6 +59,13 @@ export async function updateCategoryAction(
       isActive: parsed.data.isActive,
     },
   });
+
+  if (updated.count === 0) {
+    return {
+      success: false,
+      message: "Você não tem permissão para editar essa categoria.",
+    };
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");

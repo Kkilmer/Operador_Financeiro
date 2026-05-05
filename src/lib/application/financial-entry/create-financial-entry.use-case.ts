@@ -9,6 +9,7 @@ import {
   SettlementStatus,
 } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { addMonths, normalizeDateInput, startOfMonth } from "@/lib/utils/date";
 import { CreateFinancialEntryInput } from "@/features/lancamentos/schemas/create-financial-entry-schema";
@@ -40,6 +41,7 @@ function splitInstallments(totalAmount: number, installmentCount: number) {
 }
 
 export async function createFinancialEntryUseCase(input: CreateFinancialEntryInput) {
+  const userId = await requireCurrentUserId();
   const eventDate = normalizeDateInput(input.eventDate);
   const competenceDate = startOfMonth(eventDate);
   const isExpense = input.type === EntryType.EXPENSE;
@@ -52,12 +54,12 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     : SettlementStatus.SETTLED;
 
   const [person, account, category] = await Promise.all([
-    prisma.person.findUnique({ where: { id: input.personId } }),
-    prisma.financialAccount.findUnique({ where: { id: input.accountId }, include: { institution: true } }),
-    input.categoryId ? prisma.category.findUnique({ where: { id: input.categoryId } }) : Promise.resolve(null),
+    prisma.person.findFirst({ where: { id: input.personId, userId } }),
+    prisma.financialAccount.findFirst({ where: { id: input.accountId, userId }, include: { institution: true } }),
+    input.categoryId ? prisma.category.findFirst({ where: { id: input.categoryId, userId } }) : Promise.resolve(null),
   ]);
-  const paymentMethodOption = await prisma.paymentMethodOption.findUnique({
-    where: { paymentMethod },
+  const paymentMethodOption = await prisma.paymentMethodOption.findFirst({
+    where: { userId, paymentMethod },
   });
 
   if (!person || !person.isActive) {
@@ -117,6 +119,7 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     const entry = await prisma.financialEntry.create({
       data: {
         description: input.description,
+        userId,
         amount: input.amount,
         eventDate,
         competenceDate,
@@ -144,6 +147,7 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     const installmentPurchase = await tx.installmentPurchase.create({
       data: {
         description: input.description,
+        userId,
         totalAmount: input.amount,
         installmentCount: input.installmentCount,
         installmentAmount: amounts[0],
@@ -161,6 +165,7 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
       const entry = await tx.financialEntry.create({
         data: {
           description: `${input.description} (${index + 1}/${input.installmentCount})`,
+          userId,
           amount: amounts[index],
           eventDate: installmentDate,
           competenceDate: installmentCompetence,
@@ -177,9 +182,10 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
         },
       });
 
-      await tx.installment.create({
-        data: {
-          installmentPurchaseId: installmentPurchase.id,
+          await tx.installment.create({
+            data: {
+              userId,
+              installmentPurchaseId: installmentPurchase.id,
           financialEntryId: entry.id,
           number: index + 1,
           amount: amounts[index],

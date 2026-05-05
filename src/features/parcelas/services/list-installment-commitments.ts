@@ -1,5 +1,6 @@
 import { EntryType, Prisma, SettlementStatus } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 type InstallmentStatusFilter = "all" | "pending" | "paid";
@@ -42,9 +43,11 @@ function formatDateLabel(date: Date) {
 }
 
 export async function listInstallmentCommitments(filters: InstallmentCommitmentFilters = {}) {
+  const userId = await requireCurrentUserId();
   const { start, end } = getMonthBounds(filters.month);
 
   const financialEntryWhere: Prisma.FinancialEntryWhereInput = {
+    userId,
     type: EntryType.EXPENSE,
     isInstallment: true,
   };
@@ -61,6 +64,7 @@ export async function listInstallmentCommitments(filters: InstallmentCommitmentF
 
   const installments = await prisma.installment.findMany({
     where: {
+      userId,
       competenceDate: {
         gte: start,
         lt: end,

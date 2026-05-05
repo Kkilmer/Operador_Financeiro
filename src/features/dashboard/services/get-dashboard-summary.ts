@@ -1,6 +1,7 @@
 import { EntryFrequencyProfile, EntryType, PaymentMethod, Prisma } from "@prisma/client";
 
 import { ensureFixedEntriesForMonth } from "@/lib/application/financial-entry/ensure-fixed-entries-for-month";
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
 import { toMapTotals } from "@/features/dashboard/utils/dashboard-aggregations";
@@ -60,6 +61,7 @@ function formatEntryDate(date: Date) {
 }
 
 export async function getDashboardSummary(referenceMonth?: string, requestedYear?: string): Promise<DashboardSummary> {
+  const userId = await requireCurrentUserId();
   const { start, end } = getMonthBounds(referenceMonth);
   const chartYear = getChartYear(referenceMonth, requestedYear);
   const chartStart = new Date(chartYear, 0, 1);
@@ -68,6 +70,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
   await ensureFixedEntriesForMonth(referenceMonth);
 
   const where = {
+    userId,
     competenceDate: {
       gte: start,
       lt: end,
@@ -75,6 +78,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
   } satisfies Prisma.FinancialEntryWhereInput;
 
   const beforeMonthWhere = {
+    userId,
     competenceDate: {
       lt: start,
     },
@@ -105,7 +109,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
     installmentPreview,
   ] = await Promise.all([
     prisma.person.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { createdAt: "asc" },
       take: 1,
       select: { name: true },
@@ -187,6 +191,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           gte: chartStart,
           lt: chartEnd,
         },
+        userId,
         type: EntryType.INCOME,
       },
       select: {
@@ -200,6 +205,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           gte: chartStart,
           lt: chartEnd,
         },
+        userId,
         type: EntryType.EXPENSE,
       },
       select: {
@@ -208,6 +214,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       },
     }),
     prisma.financialEntry.findFirst({
+      where: { userId },
       orderBy: {
         competenceDate: "asc",
       },
@@ -216,6 +223,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       },
     }),
     prisma.financialEntry.findFirst({
+      where: { userId },
       orderBy: {
         competenceDate: "desc",
       },
@@ -242,6 +250,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           gte: start,
           lt: end,
         },
+        userId,
       },
       include: {
         installmentPurchase: {
@@ -261,6 +270,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
         id: {
           in: categoryGrouped.flatMap((row) => (row.categoryId ? [row.categoryId] : [])),
         },
+        userId,
       },
       select: { id: true, name: true, color: true },
     }),
@@ -269,6 +279,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
         id: {
           in: personGrouped.map((row) => row.personId),
         },
+        userId,
       },
       select: { id: true, name: true },
     }),
@@ -277,6 +288,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
         id: {
           in: accountGrouped.map((row) => row.accountId),
         },
+        userId,
       },
       select: {
         id: true,

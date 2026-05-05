@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-export function Topbar() {
+import { logoutAction } from "@/features/auth/actions/logout";
+
+type TopbarProps = {
+  userName: string;
+};
+
+export function Topbar({ userName }: TopbarProps) {
   return (
     <div className="flex items-center justify-between rounded-3xl bg-white px-4 py-3 shadow-panel">
       <div>
@@ -9,6 +15,9 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-3">
+        <span className="hidden rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600 sm:inline-flex">
+          {userName}
+        </span>
         <Link
           href="/lancamentos"
           className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
@@ -21,6 +30,14 @@ export function Topbar() {
         >
           Novo lançamento
         </Link>
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            Sair
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -7,20 +7,38 @@ import {
   PrismaClient,
 } from "@prisma/client";
 
+import { hashPassword } from "../src/lib/auth/password";
+
 const prisma = new PrismaClient();
 
 async function main() {
-  const kevin = await prisma.person.upsert({
-    where: { code: "kevin" },
-    update: { name: "Kevin", isActive: true },
-    create: { name: "Kevin", code: "kevin" },
-  });
+  const defaultUser =
+    (await prisma.user.findUnique({
+      where: { email: "kevin@operador.local" },
+    })) ??
+    (await prisma.user.create({
+      data: {
+        name: "Kevin",
+        email: "kevin@operador.local",
+        passwordHash: await hashPassword("Kevin123!"),
+      },
+    }));
 
-  const isabelle = await prisma.person.upsert({
-    where: { code: "isabelle" },
-    update: { name: "Isabelle", isActive: true },
-    create: { name: "Isabelle", code: "isabelle" },
-  });
+  const kevin =
+    (await prisma.person.findFirst({
+      where: { userId: defaultUser.id, code: "kevin" },
+    })) ??
+    (await prisma.person.create({
+      data: { userId: defaultUser.id, name: "Kevin", code: "kevin" },
+    }));
+
+  const isabelle =
+    (await prisma.person.findFirst({
+      where: { userId: defaultUser.id, code: "isabelle" },
+    })) ??
+    (await prisma.person.create({
+      data: { userId: defaultUser.id, name: "Isabelle", code: "isabelle" },
+    }));
 
   const nubank = await prisma.financialInstitution.upsert({
     where: { name_type: { name: "Nubank", type: InstitutionType.BANK } },
@@ -91,12 +109,18 @@ async function main() {
     const existing = await prisma.financialAccount.findFirst({
       where: {
         name: account.name,
+        userId: defaultUser.id,
         ownerPersonId: account.ownerPersonId,
       },
     });
 
     if (!existing) {
-      await prisma.financialAccount.create({ data: account });
+      await prisma.financialAccount.create({
+        data: {
+          ...account,
+          userId: defaultUser.id,
+        },
+      });
     } else {
       await prisma.financialAccount.update({
         where: { id: existing.id },
@@ -109,6 +133,7 @@ async function main() {
           creditLimit: account.creditLimit,
           closingDay: account.closingDay,
           dueDay: account.dueDay,
+          userId: defaultUser.id,
           isActive: true,
         },
       });
@@ -144,11 +169,17 @@ async function main() {
         name: category.name,
         type: category.type,
         parentCategoryId: null,
+        userId: defaultUser.id,
       },
     });
 
     if (!existing) {
-      await prisma.category.create({ data: category });
+      await prisma.category.create({
+        data: {
+          ...category,
+          userId: defaultUser.id,
+        },
+      });
     }
   }
 
@@ -212,17 +243,33 @@ async function main() {
   ];
 
   for (const paymentMethod of paymentMethods) {
-    await prisma.paymentMethodOption.upsert({
-      where: { paymentMethod: paymentMethod.paymentMethod },
-      update: {
-        name: paymentMethod.name,
-        behavior: paymentMethod.behavior,
-        requiresInstallments: paymentMethod.requiresInstallments,
-        immediateSettlement: paymentMethod.immediateSettlement,
-        isActive: true,
+    const existing = await prisma.paymentMethodOption.findFirst({
+      where: {
+        userId: defaultUser.id,
+        paymentMethod: paymentMethod.paymentMethod,
       },
-      create: paymentMethod,
     });
+
+    if (existing) {
+      await prisma.paymentMethodOption.update({
+        where: { id: existing.id },
+        data: {
+          name: paymentMethod.name,
+          behavior: paymentMethod.behavior,
+          requiresInstallments: paymentMethod.requiresInstallments,
+          immediateSettlement: paymentMethod.immediateSettlement,
+          isActive: true,
+          userId: defaultUser.id,
+        },
+      });
+    } else {
+      await prisma.paymentMethodOption.create({
+        data: {
+          ...paymentMethod,
+          userId: defaultUser.id,
+        },
+      });
+    }
   }
 }
 

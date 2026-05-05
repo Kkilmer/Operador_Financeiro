@@ -9,6 +9,7 @@ import {
   SettlementStatus,
 } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { normalizeDateInput, startOfMonth } from "@/lib/utils/date";
 import { UpdateFinancialEntryInput } from "@/features/lancamentos/schemas/update-financial-entry-schema";
@@ -27,6 +28,7 @@ function parseInstallmentLabel(description: string) {
 }
 
 export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInput) {
+  const userId = await requireCurrentUserId();
   const existingEntry = await prisma.financialEntry.findUnique({
     where: { id: input.id },
     include: {
@@ -40,6 +42,10 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
 
   if (!existingEntry) {
     throw new Error("Esse lançamento não foi encontrado.");
+  }
+
+  if (existingEntry.userId !== userId) {
+    throw new Error("Você não tem permissão para editar esse lançamento.");
   }
 
   const isInstallmentEntry = Boolean(existingEntry.installment);
@@ -57,10 +63,10 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
     existingEntry.origin === EntryOrigin.RECURRING_GENERATED ? EntryOrigin.MANUAL : existingEntry.origin;
 
   const [person, account, category, paymentMethodOption] = await Promise.all([
-    prisma.person.findUnique({ where: { id: input.personId } }),
-    prisma.financialAccount.findUnique({ where: { id: input.accountId } }),
-    input.categoryId ? prisma.category.findUnique({ where: { id: input.categoryId } }) : Promise.resolve(null),
-    prisma.paymentMethodOption.findUnique({ where: { paymentMethod } }),
+    prisma.person.findFirst({ where: { id: input.personId, userId } }),
+    prisma.financialAccount.findFirst({ where: { id: input.accountId, userId } }),
+    input.categoryId ? prisma.category.findFirst({ where: { id: input.categoryId, userId } }) : Promise.resolve(null),
+    prisma.paymentMethodOption.findFirst({ where: { userId, paymentMethod } }),
   ]);
 
   if (!person || !person.isActive) {

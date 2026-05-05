@@ -3,6 +3,7 @@
 import { AccountType, InstitutionType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { accountSettingsSchema } from "@/features/configuracoes/schemas/account-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -29,6 +30,8 @@ export async function updateAccountAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     id: formData.get("id"),
     name: formData.get("name"),
@@ -54,6 +57,7 @@ export async function updateAccountAction(
 
   const duplicate = await prisma.financialAccount.findFirst({
     where: {
+      userId,
       name: parsed.data.name,
       ownerPersonId: parsed.data.ownerPersonId,
       NOT: {
@@ -66,6 +70,22 @@ export async function updateAccountAction(
     return {
       success: false,
       message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
+    };
+  }
+
+  const ownerPerson = await prisma.person.findFirst({
+    where: {
+      id: parsed.data.ownerPersonId,
+      userId,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  if (!ownerPerson) {
+    return {
+      success: false,
+      message: "Escolha um titular válido para essa conta ou cartão.",
     };
   }
 
@@ -91,13 +111,13 @@ export async function updateAccountAction(
   const isCreditCapableCard =
     parsed.data.type === AccountType.CREDIT_CARD || parsed.data.type === AccountType.MULTIPLE_CARD;
 
-  await prisma.financialAccount.update({
-    where: { id: parsed.data.id },
+  const updated = await prisma.financialAccount.updateMany({
+    where: { id: parsed.data.id, userId },
     data: {
       name: parsed.data.name,
       type: parsed.data.type,
       institutionId: institution?.id ?? null,
-      ownerPersonId: parsed.data.ownerPersonId,
+      ownerPersonId: ownerPerson.id,
       initialBalance: parsed.data.initialBalance,
       creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
       closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,
@@ -105,6 +125,13 @@ export async function updateAccountAction(
       isActive: parsed.data.isActive,
     },
   });
+
+  if (updated.count === 0) {
+    return {
+      success: false,
+      message: "Você não tem permissão para editar essa conta ou cartão.",
+    };
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");

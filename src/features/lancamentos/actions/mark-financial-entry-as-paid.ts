@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { EntryOrigin, EntryType, InstallmentStatus, SettlementStatus } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 type MarkFinancialEntryAsPaidResult = {
@@ -13,6 +14,8 @@ type MarkFinancialEntryAsPaidResult = {
 export async function markFinancialEntryAsPaidAction(
   financialEntryId: string,
 ): Promise<MarkFinancialEntryAsPaidResult> {
+  const userId = await requireCurrentUserId();
+
   if (!financialEntryId?.trim()) {
     return {
       success: false,
@@ -24,6 +27,7 @@ export async function markFinancialEntryAsPaidAction(
     where: { id: financialEntryId },
     select: {
       id: true,
+      userId: true,
       type: true,
       origin: true,
       settlementStatus: true,
@@ -39,6 +43,13 @@ export async function markFinancialEntryAsPaidAction(
     return {
       success: false,
       message: "Esse lançamento não foi encontrado.",
+    };
+  }
+
+  if (entry.userId !== userId) {
+    return {
+      success: false,
+      message: "Você não tem permissão para atualizar esse lançamento.",
     };
   }
 

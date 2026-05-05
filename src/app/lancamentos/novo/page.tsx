@@ -1,15 +1,17 @@
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { FinancialEntryForm } from "@/features/lancamentos/components/financial-entry-form";
 
 export default async function NewFinancialEntryPage() {
+  const userId = await requireCurrentUserId();
   const [people, accounts, categories, paymentMethods] = await Promise.all([
     prisma.person.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
     prisma.financialAccount.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -22,12 +24,12 @@ export default async function NewFinancialEntryPage() {
       },
     }),
     prisma.category.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true, type: true },
     }),
     prisma.paymentMethodOption.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true, paymentMethod: true },
     }),

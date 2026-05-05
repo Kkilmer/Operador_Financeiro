@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
 import { EntryStatusCell } from "@/features/lancamentos/components/entry-status-cell";
 import { listInstallmentCommitments } from "@/features/parcelas/services/list-installment-commitments";
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatMonthYear } from "@/lib/utils/date";
@@ -19,9 +20,10 @@ type InstallmentsPageProps = {
 
 export default async function InstallmentsPage({ searchParams }: InstallmentsPageProps) {
   const params = (searchParams ? await searchParams : undefined) ?? {};
+  const userId = await requireCurrentUserId();
   const [people, commitments] = await Promise.all([
     prisma.person.findMany({
-      where: { isActive: true },
+      where: { userId, isActive: true },
       orderBy: { name: "asc" },
       select: {
         id: true,

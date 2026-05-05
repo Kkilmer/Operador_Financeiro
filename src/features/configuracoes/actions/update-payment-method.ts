@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PaymentMethodBehavior } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { paymentMethodSettingsSchema } from "@/features/configuracoes/schemas/payment-method-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -22,6 +23,8 @@ export async function updatePaymentMethodAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     id: formData.get("id"),
     name: formData.get("name"),
@@ -44,6 +47,7 @@ export async function updatePaymentMethodAction(
 
   const duplicate = await prisma.paymentMethodOption.findFirst({
     where: {
+      userId,
       id: { not: parsed.data.id },
       OR: [
         { name: parsed.data.name },
@@ -61,8 +65,8 @@ export async function updatePaymentMethodAction(
 
   const defaults = normalizePaymentMethodDefaults(parsed.data.behavior);
 
-  await prisma.paymentMethodOption.update({
-    where: { id: parsed.data.id },
+  const updated = await prisma.paymentMethodOption.updateMany({
+    where: { id: parsed.data.id, userId },
     data: {
       name: parsed.data.name,
       behavior: parsed.data.behavior,
@@ -72,6 +76,13 @@ export async function updatePaymentMethodAction(
       isActive: parsed.data.isActive,
     },
   });
+
+  if (updated.count === 0) {
+    return {
+      success: false,
+      message: "Você não tem permissão para editar essa forma de pagamento.",
+    };
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");

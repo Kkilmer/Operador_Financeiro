@@ -1,4 +1,5 @@
 import { ensureFixedEntriesForMonth } from "@/lib/application/financial-entry/ensure-fixed-entries-for-month";
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 function getReferenceMonthDate(referenceMonth?: string) {
@@ -25,12 +26,14 @@ function getMonthRange(referenceMonth?: string) {
 }
 
 export async function listFinancialEntries(referenceMonth?: string) {
+  const userId = await requireCurrentUserId();
   const { start, end } = getMonthRange(referenceMonth);
 
   await ensureFixedEntriesForMonth(referenceMonth);
 
   return prisma.financialEntry.findMany({
     where: {
+      userId,
       competenceDate: {
         gte: start,
         lt: end,

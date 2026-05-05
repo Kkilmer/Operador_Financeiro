@@ -1,41 +1,11 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/postgres-client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model User {
-  id           String                @id @default(cuid())
-  name         String
-  email        String                @unique
-  passwordHash String
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-
-  sessions       Session[]
-  people         Person[]
-  accounts       FinancialAccount[]
-  categories     Category[]
-  paymentMethods PaymentMethodOption[]
-  entries        FinancialEntry[]
-  purchases      InstallmentPurchase[]
-  installments   Installment[]
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, expiresAt])
+  url      = env("DATABASE_URL_POSTGRES")
 }
 
 enum InstitutionType {
@@ -116,14 +86,45 @@ enum PaymentMethodBehavior {
   OUTRO
 }
 
+model User {
+  id           String                @id
+  name         String
+  email        String                @unique
+  passwordHash String
+  createdAt    DateTime
+  updatedAt    DateTime
+
+  sessions       Session[]
+  people         Person[]
+  accounts       FinancialAccount[]
+  categories     Category[]
+  paymentMethods PaymentMethodOption[]
+  entries        FinancialEntry[]
+  purchases      InstallmentPurchase[]
+  installments   Installment[]
+}
+
+model Session {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime
+  updatedAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
 model Person {
-  id        String           @id @default(cuid())
+  id        String           @id
   userId    String?
   name      String
   code      String
-  isActive  Boolean          @default(true)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  isActive  Boolean
+  createdAt DateTime
+  updatedAt DateTime
 
   user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   accounts  FinancialAccount[]
@@ -135,13 +136,13 @@ model Person {
 }
 
 model FinancialInstitution {
-  id        String             @id @default(cuid())
+  id        String             @id
   name      String
   shortName String?
   type      InstitutionType
-  isActive  Boolean            @default(true)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  isActive  Boolean
+  createdAt DateTime
+  updatedAt DateTime
 
   accounts  FinancialAccount[]
 
@@ -149,21 +150,21 @@ model FinancialInstitution {
 }
 
 model FinancialAccount {
-  id            String                @id @default(cuid())
+  id            String                @id
   userId        String?
   name          String
   type          AccountType
   institutionId String?
   ownerPersonId String?
-  isShared      Boolean               @default(false)
-  currency      String                @default("BRL")
+  isShared      Boolean
+  currency      String
   initialBalance Decimal?
   creditLimit   Decimal?
   closingDay    Int?
   dueDay        Int?
-  isActive      Boolean               @default(true)
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
+  isActive      Boolean
+  createdAt     DateTime
+  updatedAt     DateTime
 
   user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   institution   FinancialInstitution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
@@ -180,17 +181,17 @@ model FinancialAccount {
 }
 
 model Category {
-  id               String       @id @default(cuid())
+  id               String       @id
   userId           String?
   name             String
   type             CategoryType
   color            String?
   icon             String?
   parentCategoryId String?
-  isEssential      Boolean      @default(false)
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  isEssential      Boolean
+  isActive         Boolean
+  createdAt        DateTime
+  updatedAt        DateTime
 
   user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   parentCategory   Category?    @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
@@ -207,16 +208,16 @@ model Category {
 }
 
 model PaymentMethodOption {
-  id                   String                @id @default(cuid())
+  id                   String                @id
   userId               String?
   name                 String
   behavior             PaymentMethodBehavior
   paymentMethod        PaymentMethod
-  requiresInstallments Boolean               @default(false)
-  immediateSettlement  Boolean               @default(false)
-  isActive             Boolean               @default(true)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  requiresInstallments Boolean
+  immediateSettlement  Boolean
+  isActive             Boolean
+  createdAt            DateTime
+  updatedAt            DateTime
 
   user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -228,7 +229,7 @@ model PaymentMethodOption {
 }
 
 model FinancialEntry {
-  id               String                @id @default(cuid())
+  id               String                @id
   userId           String?
   type             EntryType
   description      String
@@ -240,12 +241,12 @@ model FinancialEntry {
   categoryId       String?
   paymentMethod    PaymentMethod
   settlementStatus SettlementStatus
-  frequencyProfile EntryFrequencyProfile @default(VARIABLE)
-  isInstallment    Boolean               @default(false)
+  frequencyProfile EntryFrequencyProfile
+  isInstallment    Boolean
   notes            String?
-  origin           EntryOrigin           @default(MANUAL)
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  origin           EntryOrigin
+  createdAt        DateTime
+  updatedAt        DateTime
 
   user             User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   person           Person                @relation(fields: [personId], references: [id], onDelete: Restrict)
@@ -262,7 +263,7 @@ model FinancialEntry {
 }
 
 model InstallmentPurchase {
-  id                String           @id @default(cuid())
+  id                String           @id
   userId            String?
   description       String
   totalAmount       Decimal
@@ -273,8 +274,8 @@ model InstallmentPurchase {
   personId          String
   accountId         String
   categoryId        String
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  createdAt         DateTime
+  updatedAt         DateTime
 
   user              User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   person            Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
@@ -289,19 +290,19 @@ model InstallmentPurchase {
 }
 
 model Installment {
-  id                    String             @id @default(cuid())
+  id                    String              @id
   userId                String?
   installmentPurchaseId String
-  financialEntryId      String             @unique
+  financialEntryId      String              @unique
   number                Int
   amount                Decimal
   dueDate               DateTime
   competenceDate        DateTime
-  status                InstallmentStatus  @default(OPEN)
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  status                InstallmentStatus
+  createdAt             DateTime
+  updatedAt             DateTime
 
-  user                  User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user                  User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
   installmentPurchase   InstallmentPurchase @relation(fields: [installmentPurchaseId], references: [id], onDelete: Cascade)
   financialEntry        FinancialEntry      @relation(fields: [financialEntryId], references: [id], onDelete: Cascade)
 

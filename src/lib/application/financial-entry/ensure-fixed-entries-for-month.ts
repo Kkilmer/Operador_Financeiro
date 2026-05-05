@@ -5,6 +5,7 @@ import {
   SettlementStatus,
 } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 function getReferenceMonthDate(referenceMonth?: string) {
@@ -60,10 +61,12 @@ function shiftDateToMonth(sourceDate: Date, targetMonthStart: Date) {
 }
 
 export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
+  const userId = await requireCurrentUserId();
   const { start, end, previousStart, previousEnd } = getMonthBounds(referenceMonth);
 
   const previousMonthFixedEntries = await prisma.financialEntry.findMany({
     where: {
+      userId,
       type: EntryType.EXPENSE,
       frequencyProfile: EntryFrequencyProfile.FIXED,
       isInstallment: false,
@@ -91,6 +94,7 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
 
   const targetEntries = await prisma.financialEntry.findMany({
     where: {
+      userId,
       competenceDate: {
         gte: start,
         lt: end,
@@ -147,6 +151,7 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
         eventDate: shiftDateToMonth(template.eventDate, start),
         competenceDate: start,
         type: EntryType.EXPENSE,
+        userId,
         personId: template.personId,
         accountId: template.accountId,
         categoryId: template.categoryId,

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { categorySettingsSchema } from "@/features/configuracoes/schemas/category-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -10,6 +11,8 @@ export async function createCategoryAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     name: formData.get("name"),
     type: formData.get("type"),
@@ -30,6 +33,7 @@ export async function createCategoryAction(
 
   const duplicate = await prisma.category.findFirst({
     where: {
+      userId,
       name: parsed.data.name,
       type: parsed.data.type,
       parentCategoryId: null,
@@ -45,6 +49,7 @@ export async function createCategoryAction(
 
   await prisma.category.create({
     data: {
+      userId,
       name: parsed.data.name,
       type: parsed.data.type,
       color: parsed.data.color || null,

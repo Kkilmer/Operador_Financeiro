@@ -3,6 +3,7 @@
 import { AccountType, InstitutionType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { accountSettingsSchema } from "@/features/configuracoes/schemas/account-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -29,6 +30,8 @@ export async function createAccountAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     name: formData.get("name"),
     institutionName: formData.get("institutionName"),
@@ -53,6 +56,7 @@ export async function createAccountAction(
 
   const duplicate = await prisma.financialAccount.findFirst({
     where: {
+      userId,
       name: parsed.data.name,
       ownerPersonId: parsed.data.ownerPersonId,
     },
@@ -62,6 +66,22 @@ export async function createAccountAction(
     return {
       success: false,
       message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
+    };
+  }
+
+  const ownerPerson = await prisma.person.findFirst({
+    where: {
+      id: parsed.data.ownerPersonId,
+      userId,
+      isActive: true,
+    },
+    select: { id: true },
+  });
+
+  if (!ownerPerson) {
+    return {
+      success: false,
+      message: "Escolha um titular válido para essa conta ou cartão.",
     };
   }
 
@@ -89,10 +109,11 @@ export async function createAccountAction(
 
   await prisma.financialAccount.create({
     data: {
+      userId,
       name: parsed.data.name,
       type: parsed.data.type,
       institutionId: institution?.id ?? null,
-      ownerPersonId: parsed.data.ownerPersonId,
+      ownerPersonId: ownerPerson.id,
       initialBalance: parsed.data.initialBalance,
       creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
       closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,

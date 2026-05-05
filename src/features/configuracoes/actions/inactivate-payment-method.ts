@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 export async function inactivatePaymentMethodAction(id: string) {
-  await prisma.paymentMethodOption.update({
-    where: { id },
+  const userId = await requireCurrentUserId();
+
+  await prisma.paymentMethodOption.updateMany({
+    where: { id, userId },
     data: { isActive: false },
   });
 

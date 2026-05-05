@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { FinancialEntryEditForm } from "@/features/lancamentos/components/financial-entry-edit-form";
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 type EditFinancialEntryPageProps = {
@@ -19,6 +20,7 @@ function formatDateInputValue(date: Date) {
 
 export default async function EditFinancialEntryPage({ params }: EditFinancialEntryPageProps) {
   const { id } = await params;
+  const userId = await requireCurrentUserId();
 
   const entry = await prisma.financialEntry.findUnique({
     where: { id },
@@ -58,16 +60,22 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
     notFound();
   }
 
+  if (entry.userId !== userId) {
+    notFound();
+  }
+
   const categoryWhere =
     entry.categoryId != null
       ? {
-          OR: [{ isActive: true }, { id: entry.categoryId }],
-        }
-      : { isActive: true };
+        OR: [{ isActive: true }, { id: entry.categoryId }],
+        userId,
+      }
+      : { isActive: true, userId };
 
   const [people, accounts, categories, paymentMethods] = await Promise.all([
     prisma.person.findMany({
       where: {
+        userId,
         OR: [{ isActive: true }, { id: entry.personId }],
       },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
@@ -75,6 +83,7 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
     }),
     prisma.financialAccount.findMany({
       where: {
+        userId,
         OR: [{ isActive: true }, { id: entry.accountId }],
       },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],
@@ -96,6 +105,7 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
     }),
     prisma.paymentMethodOption.findMany({
       where: {
+        userId,
         OR: [{ isActive: true }, { paymentMethod: entry.paymentMethod }],
       },
       orderBy: [{ isActive: "desc" }, { name: "asc" }],

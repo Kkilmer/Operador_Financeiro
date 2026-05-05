@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PaymentMethodBehavior } from "@prisma/client";
 
+import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { paymentMethodSettingsSchema } from "@/features/configuracoes/schemas/payment-method-settings-schema";
 import { SettingsFormState } from "@/features/configuracoes/types/settings-action.types";
@@ -22,6 +23,8 @@ export async function createPaymentMethodAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  const userId = await requireCurrentUserId();
+
   const payload = {
     name: formData.get("name"),
     behavior: formData.get("behavior"),
@@ -43,6 +46,7 @@ export async function createPaymentMethodAction(
 
   const duplicate = await prisma.paymentMethodOption.findFirst({
     where: {
+      userId,
       OR: [
         { name: parsed.data.name },
         { paymentMethod: parsed.data.paymentMethod },
@@ -61,6 +65,7 @@ export async function createPaymentMethodAction(
 
   await prisma.paymentMethodOption.create({
     data: {
+      userId,
       name: parsed.data.name,
       behavior: parsed.data.behavior,
       paymentMethod: parsed.data.paymentMethod,
