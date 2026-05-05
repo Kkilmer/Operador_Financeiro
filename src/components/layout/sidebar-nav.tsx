@@ -58,7 +58,7 @@ export function SidebarNav({ className, mobile = false, onNavigate, onClose, isA
             <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Operador</p>
             <h1 className="mt-2 text-2xl font-semibold">Financeiro</h1>
             <p className="mt-2 text-sm text-slate-400">
-              Controle simples para o dia a dia do casal.
+              Controle simples para o seu dia a dia financeiro.
             </p>
           </div>
 

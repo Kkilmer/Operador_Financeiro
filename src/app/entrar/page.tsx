@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { loginAction } from "@/features/auth/actions/login";
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
+import { AuthTextField } from "@/features/auth/components/auth-text-field";
+import { PasswordField } from "@/features/auth/components/password-field";
 import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -29,25 +31,20 @@ export default async function LoginPage() {
       submitLabel="Entrar"
       fields={
         <>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">E-mail</span>
-            <input
-              name="email"
-              type="email"
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-              placeholder="voce@exemplo.com"
-            />
-          </label>
+          <AuthTextField
+            name="email"
+            type="email"
+            label="E-mail"
+            placeholder="voce@exemplo.com"
+            autoComplete="email"
+          />
 
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Senha</span>
-            <input
-              name="password"
-              type="password"
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-              placeholder="Sua senha"
-            />
-          </label>
+          <PasswordField
+            name="password"
+            label="Senha"
+            placeholder="Sua senha"
+            autoComplete="current-password"
+          />
 
           <div className="text-right">
             <Link

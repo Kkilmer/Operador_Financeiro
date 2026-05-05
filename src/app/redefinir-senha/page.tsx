@@ -1,5 +1,6 @@
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
 import { completePasswordResetAction } from "@/features/auth/actions/complete-password-reset";
+import { PasswordField } from "@/features/auth/components/password-field";
 import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { getCurrentUser } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
@@ -42,23 +43,19 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
         <>
           <input type="hidden" name="token" value={token} />
 
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Nova senha</span>
-            <input
-              name="password"
-              type="password"
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-            />
-          </label>
+          <PasswordField
+            name="password"
+            label="Nova senha"
+            helperText="A senha deve ter no mínimo 8 caracteres."
+            showStrengthMeter
+            autoComplete="new-password"
+          />
 
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Confirmar nova senha</span>
-            <input
-              name="confirmPassword"
-              type="password"
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-            />
-          </label>
+          <PasswordField
+            name="confirmPassword"
+            label="Confirmar nova senha"
+            autoComplete="new-password"
+          />
         </>
       }
     />

@@ -50,7 +50,8 @@ export async function resetUserPasswordAction(
   }
 
   const { rawToken, tokenHash } = createPasswordResetToken();
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
+  const resetUrl = `${process.env.APP_URL ?? "http://127.0.0.1:3000"}/redefinir-senha?token=${rawToken}`;
 
   await prisma.user.update({
     where: { id: user.id },
@@ -58,6 +59,8 @@ export async function resetUserPasswordAction(
       mustChangePassword: true,
       resetPasswordTokenHash: tokenHash,
       resetPasswordExpiresAt: expiresAt,
+      resetPasswordAttempts: 0,
+      resetPasswordBlockedUntil: null,
     },
   });
 
@@ -67,7 +70,7 @@ export async function resetUserPasswordAction(
 
   return {
     success: true,
-    message: `Link de redefinição gerado para ${user.email}. Ele expira em 24 horas.`,
-    resetUrl: `/redefinir-senha?token=${rawToken}`,
+    message: `Link de redefinição gerado para ${user.email}. Ele expira em 30 minutos.`,
+    resetUrl,
   };
 }

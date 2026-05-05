@@ -98,6 +98,8 @@ model User {
   mustChangePassword Boolean         @default(false)
   resetPasswordTokenHash String?     @unique
   resetPasswordExpiresAt DateTime?
+  resetPasswordAttempts Int          @default(0)
+  resetPasswordBlockedUntil DateTime?
   createdAt    DateTime
   updatedAt    DateTime
 

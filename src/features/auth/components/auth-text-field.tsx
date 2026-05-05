@@ -4,39 +4,25 @@ import { cn } from "@/lib/utils/cn";
 
 import { useAuthFormState } from "@/features/auth/components/auth-form-context";
 
-type CpfInputProps = {
+type AuthTextFieldProps = {
   name: string;
   label: string;
+  type?: "text" | "email" | "password";
   placeholder?: string;
   helperText?: string;
   defaultValue?: string;
+  autoComplete?: string;
 };
 
-export function formatCpf(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-
-  if (digits.length <= 3) {
-    return digits;
-  }
-
-  if (digits.length <= 6) {
-    return `${digits.slice(0, 3)}.${digits.slice(3)}`;
-  }
-
-  if (digits.length <= 9) {
-    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
-  }
-
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
-}
-
-export function CpfInput({
+export function AuthTextField({
   name,
   label,
-  placeholder = "000.000.000-00",
+  type = "text",
+  placeholder,
   helperText,
   defaultValue,
-}: CpfInputProps) {
+  autoComplete,
+}: AuthTextFieldProps) {
   const state = useAuthFormState();
   const error = state?.fieldErrors?.[name]?.[0];
 
@@ -45,11 +31,10 @@ export function CpfInput({
       <span className="text-sm font-medium text-slate-700">{label}</span>
       <input
         name={name}
-        type="text"
-        inputMode="numeric"
-        maxLength={14}
-        defaultValue={defaultValue ? formatCpf(defaultValue) : undefined}
+        type={type}
         placeholder={placeholder}
+        defaultValue={defaultValue}
+        autoComplete={autoComplete}
         aria-invalid={error ? "true" : "false"}
         aria-describedby={error ? `${name}-error` : helperText ? `${name}-helper` : undefined}
         className={cn(
@@ -58,9 +43,6 @@ export function CpfInput({
             ? "border-rose-400 bg-rose-50 text-slate-900 focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
             : "border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100",
         )}
-        onChange={(event) => {
-          event.currentTarget.value = formatCpf(event.currentTarget.value);
-        }}
       />
       {helperText ? (
         <span id={`${name}-helper`} className="text-xs text-slate-500">

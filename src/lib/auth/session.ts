@@ -96,7 +96,6 @@ export async function getCurrentUser() {
   });
 
   if (!session) {
-    cookieStore.delete(SESSION_COOKIE_NAME);
     return null;
   }
 

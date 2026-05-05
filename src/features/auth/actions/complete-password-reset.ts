@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma/client";
 const resetPasswordSchema = z
   .object({
     token: z.string().trim().min(1, "Link inválido."),
-    password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+    password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres."),
     confirmPassword: z.string().min(8, "Confirme sua senha."),
   })
   .superRefine((data, ctx) => {
@@ -20,7 +20,7 @@ const resetPasswordSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["confirmPassword"],
-        message: "As senhas precisam ser iguais.",
+        message: "As senhas não coincidem.",
       });
     }
   });
@@ -72,11 +72,13 @@ export async function completePasswordResetAction(
       mustChangePassword: false,
       resetPasswordTokenHash: null,
       resetPasswordExpiresAt: null,
+      resetPasswordAttempts: 0,
+      resetPasswordBlockedUntil: null,
       lastLoginAt: new Date(),
     },
   });
 
   await createUserSession(user.id);
 
-  redirect("/dashboard");
+  redirect("/dashboard?status=password-updated");
 }

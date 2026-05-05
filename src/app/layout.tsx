@@ -6,7 +6,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Operador Financeiro",
-  description: "Controle financeiro pessoal para casal",
+  description: "Controle simples para o seu dia a dia financeiro.",
 };
 
 export default function RootLayout({

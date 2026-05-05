@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 
+import { AuthFormProvider } from "@/features/auth/components/auth-form-context";
 import { AuthFormState } from "@/features/auth/types/auth-form-state";
 import { SubmitButton } from "@/features/lancamentos/components/submit-button";
 
@@ -42,21 +43,41 @@ export function AuthFormShell({
           <p className="text-sm text-slate-500">{description}</p>
         </div>
 
-        <form action={formAction} className="mt-6 space-y-4">
-          {fields}
+        <AuthFormProvider value={state}>
+          <form action={formAction} className="mt-6 space-y-4">
+            {fields}
 
-          {state.message ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {state.message}
-            </div>
-          ) : null}
+            {state.message ? (
+              <div
+                className={`rounded-2xl px-4 py-3 text-sm ${
+                  state.success
+                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border border-rose-200 bg-rose-50 text-rose-700"
+                }`}
+              >
+                {state.message}
+              </div>
+            ) : null}
 
-          <SubmitButton
-            label={submitLabel}
-            pendingLabel={pendingLabel ?? "Entrando..."}
-            className="w-full justify-center"
-          />
-        </form>
+            {state.debugResetUrl ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <p className="font-medium">Ambiente de desenvolvimento</p>
+                <p className="mt-1">Use este link apenas para teste local:</p>
+                <input
+                  readOnly
+                  value={state.debugResetUrl}
+                  className="mt-3 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs text-slate-700"
+                />
+              </div>
+            ) : null}
+
+            <SubmitButton
+              label={submitLabel}
+              pendingLabel={pendingLabel ?? "Entrando..."}
+              className="w-full justify-center"
+            />
+          </form>
+        </AuthFormProvider>
 
         <p className="mt-4 text-sm text-slate-500">
           {footerText}{" "}

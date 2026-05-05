@@ -11,7 +11,14 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-export default async function AdminUsersPage() {
+type AdminUsersPageProps = {
+  searchParams?: Promise<{
+    status?: string;
+  }>;
+};
+
+export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
+  const params = searchParams ? await searchParams : undefined;
   await requireAdminUser();
 
   const users = await prisma.user.findMany({
@@ -39,6 +46,12 @@ export default async function AdminUsersPage() {
       </div>
 
       <AdminSectionNav active="usuarios" />
+
+      {params?.status === "updated" ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          Usuário atualizado com sucesso.
+        </div>
+      ) : null}
 
       <AdminUsersTable
         users={users.map((user) => ({

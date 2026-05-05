@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,6 +27,41 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
   const [toggleState, toggleAction] = useActionState(toggleUserActiveAction, initialToggleState);
   const [resetState, resetAction] = useActionState(resetUserPasswordAction, initialResetState);
   const [copied, setCopied] = useState(false);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+
+  async function handleCopyResetUrl(resetUrl: string) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(resetUrl);
+        setCopied(true);
+        setCopyMessage("Link copiado com sucesso.");
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = resetUrl;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "absolute";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+
+      const copiedWithFallback = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      if (copiedWithFallback) {
+        setCopied(true);
+        setCopyMessage("Link copiado com sucesso.");
+        return;
+      }
+    } catch {
+      // Fallback handled below with a friendly message.
+    }
+
+    setCopied(false);
+    setCopyMessage("Não foi possível copiar. Copie manualmente.");
+  }
 
   useEffect(() => {
     if (toggleState.success) {
@@ -33,9 +69,23 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
     }
   }, [router, toggleState.success]);
 
+  useEffect(() => {
+    if (!resetState.resetUrl) {
+      setCopied(false);
+      setCopyMessage(null);
+    }
+  }, [resetState.resetUrl]);
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/admin/usuarios/${userId}/editar`}
+          className="rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Editar
+        </Link>
+
         <form action={toggleAction}>
           <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="nextActive" value={isActive ? "false" : "true"} />
@@ -79,14 +129,12 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
               />
               <button
                 type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(resetState.resetUrl ?? "");
-                  setCopied(true);
-                }}
+                onClick={() => handleCopyResetUrl(resetState.resetUrl ?? "")}
                 className="rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-white"
               >
                 {copied ? "Link copiado" : "Copiar link"}
               </button>
+              {copyMessage ? <p className="text-xs text-slate-600">{copyMessage}</p> : null}
             </div>
           ) : null}
         </div>

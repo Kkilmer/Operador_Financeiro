@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma/client";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Digite um e-mail válido."),
-  password: z.string().min(8, "Digite sua senha com pelo menos 8 caracteres."),
+  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres."),
 });
 
 export async function loginAction(_prevState: AuthFormState, formData: FormData): Promise<AuthFormState> {
@@ -82,7 +82,7 @@ const registerSchema = z
     name: z.string().trim().min(2, "Digite seu nome."),
     email: z.string().trim().email("Digite um e-mail válido."),
     cpf: z.string().trim().min(1, "Digite seu CPF."),
-    password: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+    password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres."),
     confirmPassword: z.string().min(8, "Confirme sua senha."),
   })
   .superRefine((data, ctx) => {
@@ -98,7 +98,7 @@ const registerSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["confirmPassword"],
-        message: "As senhas precisam ser iguais.",
+        message: "As senhas não coincidem.",
       });
     }
   });
@@ -161,5 +161,5 @@ export async function registerAction(
 
   await createUserSession(user.id);
 
-  redirect("/dashboard");
+  redirect("/dashboard?status=registered");
 }
