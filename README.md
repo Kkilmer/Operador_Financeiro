@@ -34,7 +34,8 @@ A área de lançamentos permite registrar entradas, saídas, gastos fixos, compr
 
 Acompanhe compras parceladas, compromissos do mês, valores pagos e pendentes, com filtros por período e status.
 
-<img src="docs/images/readme/parcelas.jpeg" alt="Tela de parcelas e compromissos do mês" width="100%" />
+<img width="1257" height="749" alt="WhatsApp Image 2026-05-19 at 09 05 32" src="https://github.com/user-attachments/assets/d85ebd86-13c9-42ba-b044-6a1667f49f6a" alt="Tela de parcelas e compromissos do mês" width="100%" />
+
 
 ---
 
