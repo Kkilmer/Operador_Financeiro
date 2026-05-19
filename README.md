@@ -16,7 +16,13 @@ O dashboard apresenta um resumo financeiro completo do mês, incluindo saldo dis
 
 <br />
 
-<img src="docs/images/readme/dashboard-cards.jpeg" alt="Cards e indicadores do dashboard" width="100%" />
+<p align="center">
+  <img 
+    src="https://github.com/user-attachments/assets/2637a227-b83a-4952-95ad-a20459963473"
+    alt="Cards e indicadores do dashboard"
+    width="80%"
+  />
+</p>
 
 ---
 
