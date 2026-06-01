@@ -69,7 +69,7 @@ export function PaymentMethodList({
               <td className="py-4 pr-4 font-medium text-slate-900">{paymentMethod.name}</td>
               <td className="py-4 pr-4 text-slate-700">{paymentBehaviorLabel(paymentMethod.behavior)}</td>
               <td className="py-4 pr-4 text-slate-700">
-                {paymentMethod.requiresInstallments ? "Sim" : "Nao"}
+                {paymentMethod.requiresInstallments ? "Sim" : "Não"}
               </td>
               <td className="py-4 pr-4 text-slate-700">
                 {paymentMethod.immediateSettlement ? "Imediata" : "Não imediata"}

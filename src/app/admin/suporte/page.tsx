@@ -55,7 +55,7 @@ export default async function AdminSupportPage({ searchParams }: AdminSupportPag
         <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-400">Admin</p>
         <h1 className="text-3xl font-semibold text-slate-900">Suporte</h1>
         <p className="max-w-3xl text-sm text-slate-600">
-          Acompanhe as solicitacoes enviadas pelos usuarios e devolva um retorno sem acessar os dados financeiros deles.
+          Acompanhe as solicitações enviadas pelos usuários e devolva um retorno sem acessar os dados financeiros deles.
         </p>
       </div>
 

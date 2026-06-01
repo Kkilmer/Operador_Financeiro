@@ -62,7 +62,7 @@ export function SupportTicketsList({ tickets, emptyMessage }: SupportTicketsList
 
           {ticket.adminResponse ? (
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Resposta do admin</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Resposta do administrador</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">{ticket.adminResponse}</p>
             </div>
           ) : null}

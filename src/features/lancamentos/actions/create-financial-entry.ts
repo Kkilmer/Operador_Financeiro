@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createFinancialEntryUseCase } from "@/lib/application/financial-entry/create-financial-entry.use-case";
+import { errorResult, logServerError } from "@/lib/actions/action-result";
 import { createFinancialEntrySchema } from "@/features/lancamentos/schemas/create-financial-entry-schema";
 import { CreateFinancialEntryActionState } from "@/features/lancamentos/types/financial-entry-form.types";
 
@@ -35,23 +36,26 @@ export async function createFinancialEntryAction(
   const parsed = createFinancialEntrySchema.safeParse(payload);
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Confira os campos destacados e tente novamente.",
+    return errorResult("Confira os campos destacados e tente novamente.", "ENTRY_CREATE_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   try {
     await createFinancialEntryUseCase(parsed.data);
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Não conseguimos salvar agora. Tente novamente.",
-    };
+    logServerError("entries.create", error, {
+      type: parsed.data.type,
+      personId: parsed.data.personId,
+      accountId: parsed.data.accountId,
+    });
+
+    return errorResult(
+      error instanceof Error
+        ? error.message
+        : "Não conseguimos salvar seu lançamento agora. Tente novamente ou acesse o suporte.",
+      "ENTRY_CREATE_FAILED",
+    );
   }
 
   revalidatePath("/dashboard");

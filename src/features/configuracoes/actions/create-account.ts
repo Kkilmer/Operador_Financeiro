@@ -3,6 +3,7 @@
 import { AccountType, InstitutionType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { accountSettingsSchema } from "@/features/configuracoes/schemas/account-settings-schema";
@@ -47,11 +48,9 @@ export async function createAccountAction(
   const parsed = accountSettingsSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Revise os campos da conta ou cartão.",
+    return errorResult("Revise os campos da conta ou cartão.", "SETTINGS_ACCOUNT_CREATE_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   const duplicate = await prisma.financialAccount.findFirst({
@@ -63,10 +62,10 @@ export async function createAccountAction(
   });
 
   if (duplicate) {
-    return {
-      success: false,
-      message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
-    };
+    return errorResult(
+      "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
+      "SETTINGS_ACCOUNT_DUPLICATE",
+    );
   }
 
   const ownerPerson = await prisma.person.findFirst({
@@ -79,10 +78,7 @@ export async function createAccountAction(
   });
 
   if (!ownerPerson) {
-    return {
-      success: false,
-      message: "Escolha um titular válido para essa conta ou cartão.",
-    };
+    return errorResult("Escolha um titular válido para essa conta ou cartão.", "SETTINGS_ACCOUNT_INVALID_OWNER");
   }
 
   const institution = parsed.data.institutionName?.trim()
@@ -107,28 +103,33 @@ export async function createAccountAction(
   const isCreditCapableCard =
     parsed.data.type === AccountType.CREDIT_CARD || parsed.data.type === AccountType.MULTIPLE_CARD;
 
-  await prisma.financialAccount.create({
-    data: {
-      userId,
-      name: parsed.data.name,
-      type: parsed.data.type,
-      institutionId: institution?.id ?? null,
-      ownerPersonId: ownerPerson.id,
-      initialBalance: parsed.data.initialBalance,
-      creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
-      closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,
-      dueDay: isCreditCapableCard ? parsed.data.dueDay ?? null : null,
-      isActive: parsed.data.isActive,
-      isShared: false,
-    },
-  });
+  try {
+    await prisma.financialAccount.create({
+      data: {
+        userId,
+        name: parsed.data.name,
+        type: parsed.data.type,
+        institutionId: institution?.id ?? null,
+        ownerPersonId: ownerPerson.id,
+        initialBalance: parsed.data.initialBalance,
+        creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
+        closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,
+        dueDay: isCreditCapableCard ? parsed.data.dueDay ?? null : null,
+        isActive: parsed.data.isActive,
+        isShared: false,
+      },
+    });
+  } catch (error) {
+    logServerError("settings.create-account", error, { userId, name: parsed.data.name });
+    return errorResult(
+      "Não conseguimos criar a conta ou cartão agora. Tente novamente ou use o suporte.",
+      "SETTINGS_ACCOUNT_CREATE_FAILED",
+    );
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");
   revalidatePath("/lancamentos/novo");
 
-  return {
-    success: true,
-    message: "Conta ou cartão criado com sucesso.",
-  };
+  return successResult("Conta ou cartão criado com sucesso.");
 }

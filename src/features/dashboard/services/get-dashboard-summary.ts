@@ -5,6 +5,8 @@ import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
 import { toMapTotals } from "@/features/dashboard/utils/dashboard-aggregations";
+import { calculateMonthlyBalanceSnapshot } from "@/features/dashboard/utils/monthly-balance";
+import { formatInstallmentLabel } from "@/features/parcelas/utils/installment-label";
 
 const CATEGORY_CHART_COLORS = [
   "#0f766e",
@@ -71,6 +73,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
 
   const where = {
     userId,
+    deletedAt: null,
     competenceDate: {
       gte: start,
       lt: end,
@@ -79,6 +82,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
 
   const beforeMonthWhere = {
     userId,
+    deletedAt: null,
     competenceDate: {
       lt: start,
     },
@@ -192,6 +196,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           lt: chartEnd,
         },
         userId,
+        deletedAt: null,
         type: EntryType.INCOME,
       },
       select: {
@@ -206,6 +211,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           lt: chartEnd,
         },
         userId,
+        deletedAt: null,
         type: EntryType.EXPENSE,
       },
       select: {
@@ -214,7 +220,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       },
     }),
     prisma.financialEntry.findFirst({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: {
         competenceDate: "asc",
       },
@@ -223,7 +229,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       },
     }),
     prisma.financialEntry.findFirst({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: {
         competenceDate: "desc",
       },
@@ -251,6 +257,9 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
           lt: end,
         },
         userId,
+        financialEntry: {
+          deletedAt: null,
+        },
       },
       include: {
         installmentPurchase: {
@@ -310,9 +319,14 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
 
   const totalExpense = getAmountSum(expenseGrouped);
   const totalSaved = getAmountSum(savedGrouped);
-  const previousBalance =
-    getAmountSum(previousIncomeGrouped) - getAmountSum(previousExpenseGrouped) - getAmountSum(previousSavedGrouped);
-  const currentMonthBalance = getAmountSum(incomeGrouped) - totalExpense - totalSaved;
+  const { previousBalance, currentMonthBalance, balance } = calculateMonthlyBalanceSnapshot({
+    previousIncome: getAmountSum(previousIncomeGrouped),
+    previousExpense: getAmountSum(previousExpenseGrouped),
+    previousSaved: getAmountSum(previousSavedGrouped),
+    currentIncome: getAmountSum(incomeGrouped),
+    currentExpense: totalExpense,
+    currentSaved: totalSaved,
+  });
   const totalExpenseByPerson = personGrouped.reduce((sum, row) => sum + Number(row._sum.amount ?? 0), 0);
   const incomeByMonth = new Map<number, number>();
   const expenseByMonth = new Map<number, number>();
@@ -370,7 +384,7 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
     totalIncome: getAmountSum(incomeGrouped),
     totalExpense,
     totalSaved,
-    balance: previousBalance + currentMonthBalance,
+    balance,
     totalInstallments: getAmountSum(installmentGrouped),
     totalFixedExpenses: getAmountSum(fixedGrouped),
     totalVariableExpenses: getAmountSum(variableGrouped),
@@ -428,7 +442,10 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       id: installment.id,
       cardName: installment.installmentPurchase.account.name,
       amount: Number(installment.amount),
-      installmentLabel: `${installment.number}/${installment.installmentPurchase.installmentCount}`,
+      installmentLabel: formatInstallmentLabel(
+        installment.number,
+        installment.installmentPurchase.installmentCount,
+      ),
     })),
     savedEntries: savedEntries.map((entry) => ({
       id: entry.id,

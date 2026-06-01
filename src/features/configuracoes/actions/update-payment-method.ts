@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PaymentMethodBehavior } from "@prisma/client";
 
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { paymentMethodSettingsSchema } from "@/features/configuracoes/schemas/payment-method-settings-schema";
@@ -38,11 +39,13 @@ export async function updatePaymentMethodAction(
   const parsed = paymentMethodSettingsSchema.safeParse(payload);
 
   if (!parsed.success || !parsed.data.id) {
-    return {
-      success: false,
-      message: "Revise os campos da forma de pagamento.",
+    return errorResult(
+      "Revise os campos da forma de pagamento.",
+      "SETTINGS_PAYMENT_METHOD_UPDATE_VALIDATION_ERROR",
+      {
       fieldErrors: parsed.success ? undefined : parsed.error.flatten().fieldErrors,
-    };
+      },
+    );
   }
 
   const duplicate = await prisma.paymentMethodOption.findFirst({
@@ -57,39 +60,46 @@ export async function updatePaymentMethodAction(
   });
 
   if (duplicate) {
-    return {
-      success: false,
-      message: "Já existe outra forma de pagamento com esse nome ou comportamento interno.",
-    };
+    return errorResult(
+      "Já existe outra forma de pagamento com esse nome ou comportamento interno.",
+      "SETTINGS_PAYMENT_METHOD_DUPLICATE",
+    );
   }
 
   const defaults = normalizePaymentMethodDefaults(parsed.data.behavior);
 
-  const updated = await prisma.paymentMethodOption.updateMany({
-    where: { id: parsed.data.id, userId },
-    data: {
-      name: parsed.data.name,
-      behavior: parsed.data.behavior,
-      paymentMethod: parsed.data.paymentMethod,
-      requiresInstallments: defaults.requiresInstallments || parsed.data.requiresInstallments,
-      immediateSettlement: defaults.immediateSettlement || parsed.data.immediateSettlement,
-      isActive: parsed.data.isActive,
-    },
-  });
+  let updated;
+
+  try {
+    updated = await prisma.paymentMethodOption.updateMany({
+      where: { id: parsed.data.id, userId },
+      data: {
+        name: parsed.data.name,
+        behavior: parsed.data.behavior,
+        paymentMethod: parsed.data.paymentMethod,
+        requiresInstallments: defaults.requiresInstallments || parsed.data.requiresInstallments,
+        immediateSettlement: defaults.immediateSettlement || parsed.data.immediateSettlement,
+        isActive: parsed.data.isActive,
+      },
+    });
+  } catch (error) {
+    logServerError("settings.update-payment-method", error, { userId, paymentMethodId: parsed.data.id });
+    return errorResult(
+      "Não conseguimos atualizar a forma de pagamento agora. Tente novamente ou use o suporte.",
+      "SETTINGS_PAYMENT_METHOD_UPDATE_FAILED",
+    );
+  }
 
   if (updated.count === 0) {
-    return {
-      success: false,
-      message: "Você não tem permissão para editar essa forma de pagamento.",
-    };
+    return errorResult(
+      "Você não tem permissão para editar essa forma de pagamento.",
+      "SETTINGS_PAYMENT_METHOD_FORBIDDEN",
+    );
   }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");
   revalidatePath("/lancamentos/novo");
 
-  return {
-    success: true,
-    message: "Forma de pagamento atualizada com sucesso.",
-  };
+  return successResult("Forma de pagamento atualizada com sucesso.");
 }

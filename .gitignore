@@ -11,3 +11,4 @@ prisma/dev.db-journal
 prisma/dev-backup-*.db
 prisma/dev-backup-*.db-*
 src/generated/
+test-results/

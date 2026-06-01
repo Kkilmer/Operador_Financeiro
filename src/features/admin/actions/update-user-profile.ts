@@ -3,12 +3,14 @@
 import { z } from "zod";
 
 import { isValidCpf, normalizeCpf } from "@/lib/auth/cpf";
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireAdminUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
 export type UpdateUserProfileState = {
   success: boolean;
   message?: string;
+  errorCode?: string;
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
@@ -33,21 +35,17 @@ export async function updateUserProfileAction(
   });
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Confira os dados e tente novamente.",
+    return errorResult("Confira os dados e tente novamente.", "ADMIN_UPDATE_USER_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   if (!isValidCpf(parsed.data.cpf)) {
-    return {
-      success: false,
-      message: "Confira os dados e tente novamente.",
+    return errorResult("Confira os dados e tente novamente.", "ADMIN_UPDATE_USER_INVALID_CPF", {
       fieldErrors: {
         cpf: ["Digite um CPF válido."],
       },
-    };
+    });
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -59,10 +57,7 @@ export async function updateUserProfileAction(
   });
 
   if (!targetUser) {
-    return {
-      success: false,
-      message: "Usuário não encontrado.",
-    };
+    return errorResult("Usuário não encontrado.", "ADMIN_USER_NOT_FOUND");
   }
 
   const existingEmail = await prisma.user.findFirst({
@@ -76,13 +71,11 @@ export async function updateUserProfileAction(
   });
 
   if (existingEmail) {
-    return {
-      success: false,
-      message: "Já existe uma conta com esse e-mail.",
+    return errorResult("Já existe uma conta com esse e-mail.", "ADMIN_UPDATE_USER_DUPLICATE_EMAIL", {
       fieldErrors: {
         email: ["Esse e-mail já está em uso."],
       },
-    };
+    });
   }
 
   const existingCpf = await prisma.user.findFirst({
@@ -96,26 +89,29 @@ export async function updateUserProfileAction(
   });
 
   if (existingCpf) {
-    return {
-      success: false,
-      message: "Já existe uma conta com esse CPF.",
+    return errorResult("Já existe uma conta com esse CPF.", "ADMIN_UPDATE_USER_DUPLICATE_CPF", {
       fieldErrors: {
         cpf: ["Esse CPF já está em uso."],
       },
-    };
+    });
   }
 
-  await prisma.user.update({
-    where: { id: parsed.data.userId },
-    data: {
-      name: parsed.data.name,
-      email,
-      cpf,
-    },
-  });
+  try {
+    await prisma.user.update({
+      where: { id: parsed.data.userId },
+      data: {
+        name: parsed.data.name,
+        email,
+        cpf,
+      },
+    });
+  } catch (error) {
+    logServerError("admin.update-user-profile", error, { userId: parsed.data.userId });
+    return errorResult(
+      "Não conseguimos salvar os dados do usuário agora. Tente novamente ou use o suporte.",
+      "ADMIN_UPDATE_USER_FAILED",
+    );
+  }
 
-  return {
-    success: true,
-    message: "Usuário atualizado com sucesso.",
-  };
+  return successResult("Usuário atualizado com sucesso.");
 }

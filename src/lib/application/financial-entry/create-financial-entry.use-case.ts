@@ -159,15 +159,15 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
       },
     });
 
-    for (let index = 0; index < amounts.length; index += 1) {
-      const installmentDate = addMonths(eventDate, index);
-      const installmentCompetence = startOfMonth(installmentDate);
-      const entry = await tx.financialEntry.create({
-        data: {
-          description: `${input.description} (${index + 1}/${input.installmentCount})`,
-          userId,
-          amount: amounts[index],
-          eventDate: installmentDate,
+      for (let index = 0; index < amounts.length; index += 1) {
+        const installmentDate = addMonths(eventDate, index);
+        const installmentCompetence = startOfMonth(installmentDate);
+        const entry = await tx.financialEntry.create({
+          data: {
+            description: input.description,
+            userId,
+            amount: amounts[index],
+            eventDate: installmentDate,
           competenceDate: installmentCompetence,
           type: EntryType.EXPENSE,
           personId: input.personId,

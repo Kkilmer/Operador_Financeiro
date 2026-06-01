@@ -45,6 +45,10 @@ type FinancialEntryEditFormProps = {
     frequencyProfile: EntryFrequencyProfile;
     notes: string;
     isInstallmentEntry: boolean;
+    installmentLabel: string | null;
+    installmentNumber: number | null;
+    installmentCount: number | null;
+    installmentPurchaseTotalAmount: number | null;
   };
 };
 
@@ -84,12 +88,17 @@ export function FinancialEntryEditForm({
   const [selectedSettlementStatus, setSelectedSettlementStatus] = useState<SettlementStatus>(
     initialValues.settlementStatus,
   );
+  const [selectedInstallmentNumber, setSelectedInstallmentNumber] = useState(
+    initialValues.installmentNumber?.toString() ?? "",
+  );
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [selectedFrequencyProfile, setSelectedFrequencyProfile] = useState<EntryFrequencyProfile>(
     initialValues.frequencyProfile,
   );
   const isExpense = selectedType === EntryType.EXPENSE;
   const isIncome = selectedType === EntryType.INCOME;
   const isSaved = selectedType === EntryType.SAVED;
+  const adjustment = state.installmentAdjustment;
 
   const visibleCategories = useMemo(() => {
     if (selectedType === EntryType.INCOME) {
@@ -158,6 +167,12 @@ export function FinancialEntryEditForm({
     selectedType,
   ]);
 
+  useEffect(() => {
+    if (state.installmentAdjustment) {
+      setIsAdjustmentModalOpen(true);
+    }
+  }, [state.installmentAdjustment]);
+
   return (
     <form action={formAction} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="id" value={initialValues.id} />
@@ -189,14 +204,155 @@ export function FinancialEntryEditForm({
       </div>
 
       {isInstallmentEntry ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Este lançamento é uma parcela. As alterações serão aplicadas somente nesta parcela.
+        <div className="space-y-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div>
+            Este lançamento é uma parcela. As alterações financeiras serão aplicadas somente nesta
+            parcela.
+            {initialValues.installmentLabel ? (
+              <span className="mt-2 block font-medium text-amber-900">
+                Parcela atual: {initialValues.installmentLabel}
+              </span>
+            ) : null}
+          </div>
+
+          {initialValues.installmentNumber && initialValues.installmentCount ? (
+            <label className="block max-w-xs space-y-2">
+              <span className="text-sm font-medium text-amber-900">Número da parcela</span>
+              <div className="flex items-center gap-2">
+                <input
+                  name="installmentNumber"
+                  type="number"
+                  min={1}
+                  value={selectedInstallmentNumber}
+                  onChange={(event) => setSelectedInstallmentNumber(event.target.value)}
+                  className="w-28 rounded-2xl border border-amber-300 bg-white px-4 py-3 text-slate-900"
+                />
+                <span className="text-sm font-medium text-amber-900">
+                  / {initialValues.installmentCount}
+                </span>
+              </div>
+              <p className="text-xs text-amber-800">
+                Se alterar este número, as próximas parcelas em aberto serão ajustadas em sequência.
+              </p>
+              <ErrorText message={state.fieldErrors?.installmentNumber?.[0]} />
+            </label>
+          ) : null}
         </div>
       ) : null}
 
       {state.message ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {state.message}
+        </div>
+      ) : null}
+
+      {isAdjustmentModalOpen && adjustment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.25em] text-amber-600">Compra parcelada</p>
+              <h2 className="text-2xl font-semibold text-slate-900">Ajustar dados da compra?</h2>
+              <p className="text-sm text-slate-600">
+                Essa alteração ultrapassa o total atual da compra parcelada. Se você confirmar,
+                ajustaremos somente esta compra e as próximas parcelas em aberto.
+              </p>
+            </div>
+
+            <input type="hidden" name="adjustInstallmentPurchase" value="true" />
+            <input
+              type="hidden"
+              name="adjustmentCurrentTotalAmount"
+              value={adjustment.currentTotalAmount}
+            />
+            <input
+              type="hidden"
+              name="adjustmentCurrentTotalInstallments"
+              value={adjustment.currentTotalInstallments}
+            />
+            <input
+              type="hidden"
+              name="adjustmentRequestedInstallmentNumber"
+              value={adjustment.requestedInstallmentNumber}
+            />
+            <input
+              type="hidden"
+              name="adjustmentSuggestedTotalInstallments"
+              value={adjustment.suggestedTotalInstallments}
+            />
+            <input
+              type="hidden"
+              name="adjustmentNextInstallmentNumber"
+              value={adjustment.nextInstallmentNumber ?? ""}
+            />
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">Valor total da compra</span>
+                <input
+                  name="installmentPurchaseTotalAmount"
+                  defaultValue={(initialValues.installmentPurchaseTotalAmount ?? adjustment.currentTotalAmount)
+                    .toFixed(2)
+                    .replace(".", ",")}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                />
+                <ErrorText message={state.fieldErrors?.installmentPurchaseTotalAmount?.[0]} />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">Quantidade total de parcelas</span>
+                <input
+                  name="installmentPurchaseInstallmentCount"
+                  type="number"
+                  min={adjustment.suggestedTotalInstallments}
+                  defaultValue={adjustment.suggestedTotalInstallments}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                />
+                <p className="text-xs text-slate-500">
+                  Atual: {adjustment.currentTotalInstallments}. Mínimo sugerido:{" "}
+                  {adjustment.suggestedTotalInstallments}.
+                </p>
+                <ErrorText message={state.fieldErrors?.installmentPurchaseInstallmentCount?.[0]} />
+              </label>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="font-medium">Resumo do impacto</p>
+              <ul className="mt-2 space-y-1">
+                <li>
+                  Parcela atual será {adjustment.requestedInstallmentNumber}/
+                  {adjustment.suggestedTotalInstallments}
+                </li>
+                {adjustment.nextInstallmentNumber ? (
+                  <li>
+                    Próxima parcela em aberto será {adjustment.nextInstallmentNumber}/
+                    {adjustment.suggestedTotalInstallments}
+                  </li>
+                ) : null}
+                <li>Parcelas anteriores, pagas ou removidas não serão alteradas.</li>
+              </ul>
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsAdjustmentModalOpen(false)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedInstallmentNumber(initialValues.installmentNumber?.toString() ?? "");
+                  setIsAdjustmentModalOpen(false);
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Manter como está
+              </button>
+              <SubmitButton label="Atualizar compra parcelada" pendingLabel="Atualizando..." />
+            </div>
+          </div>
         </div>
       ) : null}
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { PaymentMethodBehavior } from "@prisma/client";
 
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { paymentMethodSettingsSchema } from "@/features/configuracoes/schemas/payment-method-settings-schema";
@@ -37,11 +38,13 @@ export async function createPaymentMethodAction(
   const parsed = paymentMethodSettingsSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Revise os campos da forma de pagamento.",
+    return errorResult(
+      "Revise os campos da forma de pagamento.",
+      "SETTINGS_PAYMENT_METHOD_CREATE_VALIDATION_ERROR",
+      {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+      },
+    );
   }
 
   const duplicate = await prisma.paymentMethodOption.findFirst({
@@ -55,31 +58,36 @@ export async function createPaymentMethodAction(
   });
 
   if (duplicate) {
-    return {
-      success: false,
-      message: "Já existe uma forma de pagamento com esse nome ou comportamento interno.",
-    };
+    return errorResult(
+      "Já existe uma forma de pagamento com esse nome ou comportamento interno.",
+      "SETTINGS_PAYMENT_METHOD_DUPLICATE",
+    );
   }
 
   const defaults = normalizePaymentMethodDefaults(parsed.data.behavior);
 
-  await prisma.paymentMethodOption.create({
-    data: {
-      userId,
-      name: parsed.data.name,
-      behavior: parsed.data.behavior,
-      paymentMethod: parsed.data.paymentMethod,
-      requiresInstallments: defaults.requiresInstallments || parsed.data.requiresInstallments,
-      immediateSettlement: defaults.immediateSettlement || parsed.data.immediateSettlement,
-      isActive: parsed.data.isActive,
-    },
-  });
+  try {
+    await prisma.paymentMethodOption.create({
+      data: {
+        userId,
+        name: parsed.data.name,
+        behavior: parsed.data.behavior,
+        paymentMethod: parsed.data.paymentMethod,
+        requiresInstallments: defaults.requiresInstallments || parsed.data.requiresInstallments,
+        immediateSettlement: defaults.immediateSettlement || parsed.data.immediateSettlement,
+        isActive: parsed.data.isActive,
+      },
+    });
+  } catch (error) {
+    logServerError("settings.create-payment-method", error, { userId, name: parsed.data.name });
+    return errorResult(
+      "Não conseguimos criar a forma de pagamento agora. Tente novamente ou use o suporte.",
+      "SETTINGS_PAYMENT_METHOD_CREATE_FAILED",
+    );
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos/novo");
 
-  return {
-    success: true,
-    message: "Forma de pagamento criada com sucesso.",
-  };
+  return successResult("Forma de pagamento criada com sucesso.");
 }

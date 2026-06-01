@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { categorySettingsSchema } from "@/features/configuracoes/schemas/category-settings-schema";
@@ -24,11 +25,9 @@ export async function createCategoryAction(
   const parsed = categorySettingsSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Revise os campos da categoria.",
+    return errorResult("Revise os campos da categoria.", "SETTINGS_CATEGORY_CREATE_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   const duplicate = await prisma.category.findFirst({
@@ -41,28 +40,30 @@ export async function createCategoryAction(
   });
 
   if (duplicate) {
-    return {
-      success: false,
-      message: "Já existe uma categoria com esse nome e tipo.",
-    };
+    return errorResult("Já existe uma categoria com esse nome e tipo.", "SETTINGS_CATEGORY_DUPLICATE");
   }
 
-  await prisma.category.create({
-    data: {
-      userId,
-      name: parsed.data.name,
-      type: parsed.data.type,
-      color: parsed.data.color || null,
-      icon: parsed.data.icon || null,
-      isActive: parsed.data.isActive,
-    },
-  });
+  try {
+    await prisma.category.create({
+      data: {
+        userId,
+        name: parsed.data.name,
+        type: parsed.data.type,
+        color: parsed.data.color || null,
+        icon: parsed.data.icon || null,
+        isActive: parsed.data.isActive,
+      },
+    });
+  } catch (error) {
+    logServerError("settings.create-category", error, { userId, name: parsed.data.name });
+    return errorResult(
+      "Não conseguimos criar a categoria agora. Tente novamente ou use o suporte se o problema continuar.",
+      "SETTINGS_CATEGORY_CREATE_FAILED",
+    );
+  }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos/novo");
 
-  return {
-    success: true,
-    message: "Categoria criada com sucesso.",
-  };
+  return successResult("Categoria criada com sucesso.");
 }

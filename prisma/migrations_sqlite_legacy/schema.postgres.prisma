@@ -147,14 +147,14 @@ model Session {
 
 model Person {
   id        String           @id
-  userId    String?
+  userId    String
   name      String
   code      String
   isActive  Boolean
   createdAt DateTime
   updatedAt DateTime
 
-  user      User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Restrict)
   accounts  FinancialAccount[]
   entries   FinancialEntry[]
   purchases InstallmentPurchase[]
@@ -179,7 +179,7 @@ model FinancialInstitution {
 
 model FinancialAccount {
   id            String                @id
-  userId        String?
+  userId        String
   name          String
   type          AccountType
   institutionId String?
@@ -194,7 +194,7 @@ model FinancialAccount {
   createdAt     DateTime
   updatedAt     DateTime
 
-  user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   institution   FinancialInstitution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   ownerPerson   Person?               @relation(fields: [ownerPersonId], references: [id], onDelete: SetNull)
 
@@ -210,7 +210,7 @@ model FinancialAccount {
 
 model Category {
   id               String       @id
-  userId           String?
+  userId           String
   name             String
   type             CategoryType
   color            String?
@@ -221,7 +221,7 @@ model Category {
   createdAt        DateTime
   updatedAt        DateTime
 
-  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Restrict)
   parentCategory   Category?    @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
   childCategories  Category[]   @relation("CategoryHierarchy")
 
@@ -237,7 +237,7 @@ model Category {
 
 model PaymentMethodOption {
   id                   String                @id
-  userId               String?
+  userId               String
   name                 String
   behavior             PaymentMethodBehavior
   paymentMethod        PaymentMethod
@@ -247,7 +247,7 @@ model PaymentMethodOption {
   createdAt            DateTime
   updatedAt            DateTime
 
-  user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   @@unique([userId, name])
   @@unique([userId, paymentMethod])
@@ -258,7 +258,7 @@ model PaymentMethodOption {
 
 model FinancialEntry {
   id               String                @id
-  userId           String?
+  userId           String
   type             EntryType
   description      String
   amount           Decimal
@@ -273,16 +273,18 @@ model FinancialEntry {
   isInstallment    Boolean
   notes            String?
   origin           EntryOrigin
+  deletedAt        DateTime?
   createdAt        DateTime
   updatedAt        DateTime
 
-  user             User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
   person           Person                @relation(fields: [personId], references: [id], onDelete: Restrict)
   account          FinancialAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category         Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   installment      Installment?
 
   @@index([userId, competenceDate])
+  @@index([userId, deletedAt])
   @@index([personId, competenceDate])
   @@index([accountId, competenceDate])
   @@index([categoryId, competenceDate])
@@ -292,7 +294,7 @@ model FinancialEntry {
 
 model InstallmentPurchase {
   id                String           @id
-  userId            String?
+  userId            String
   description       String
   totalAmount       Decimal
   installmentCount  Int
@@ -305,7 +307,7 @@ model InstallmentPurchase {
   createdAt         DateTime
   updatedAt         DateTime
 
-  user              User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user              User             @relation(fields: [userId], references: [id], onDelete: Restrict)
   person            Person           @relation(fields: [personId], references: [id], onDelete: Restrict)
   account           FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
   category          Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
@@ -319,7 +321,7 @@ model InstallmentPurchase {
 
 model Installment {
   id                    String              @id
-  userId                String?
+  userId                String
   installmentPurchaseId String
   financialEntryId      String              @unique
   number                Int
@@ -330,7 +332,7 @@ model Installment {
   createdAt             DateTime
   updatedAt             DateTime
 
-  user                  User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   installmentPurchase   InstallmentPurchase @relation(fields: [installmentPurchaseId], references: [id], onDelete: Cascade)
   financialEntry        FinancialEntry      @relation(fields: [financialEntryId], references: [id], onDelete: Cascade)
 

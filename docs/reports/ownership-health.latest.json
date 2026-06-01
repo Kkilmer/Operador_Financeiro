@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-06-01T00:56:12.376Z",
+  "summary": {
+    "nullUserId": {
+      "person": 0,
+      "financialAccount": 0,
+      "category": 0,
+      "paymentMethodOption": 0,
+      "financialEntry": 0,
+      "installmentPurchase": 0,
+      "installment": 0
+    },
+    "relationshipReview": {
+      "note": "Estas contagens devem ser auditadas junto com a amostragem detalhada. Quando o total estiver em zero, a migration para NOT NULL fica segura.",
+      "counters": {
+        "entryPersonMismatch": 0,
+        "entryAccountMismatch": 0,
+        "entryCategoryMismatch": 0,
+        "purchasePersonMismatch": 0,
+        "purchaseAccountMismatch": 0,
+        "purchaseCategoryMismatch": 0,
+        "installmentPurchaseMismatch": 0,
+        "installmentEntryMismatch": 0
+      }
+    }
+  },
+  "samples": {
+    "financialEntries": [],
+    "installmentPurchases": [],
+    "installments": []
+  }
+}

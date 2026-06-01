@@ -8,7 +8,7 @@ export function MonthFilterForm({ selectedMonth, dark = false }: MonthFilterForm
     <form className="flex flex-wrap items-end gap-3" method="get">
       <label className="flex flex-col gap-2 text-sm">
         <span className={dark ? "font-medium text-slate-200" : "font-medium text-slate-600"}>
-          Mes de referencia
+          Mês de referência
         </span>
         <input
           type="month"

@@ -21,7 +21,7 @@ export function AdminSupportTicketsTable({ tickets }: AdminSupportTicketsTablePr
   if (tickets.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-sm text-slate-500">
-        Nenhuma solicitacao encontrada com esses filtros.
+        Nenhuma solicitação encontrada com esses filtros.
       </div>
     );
   }
@@ -31,13 +31,13 @@ export function AdminSupportTicketsTable({ tickets }: AdminSupportTicketsTablePr
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.2em] text-slate-500">
           <tr>
-            <th className="px-4 py-3">Usuario</th>
+            <th className="px-4 py-3">Usuário</th>
             <th className="px-4 py-3">Tipo</th>
             <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Descricao</th>
+            <th className="px-4 py-3">Descrição</th>
             <th className="px-4 py-3">Criado</th>
             <th className="px-4 py-3">Atualizado</th>
-            <th className="px-4 py-3">Acoes</th>
+            <th className="px-4 py-3">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">

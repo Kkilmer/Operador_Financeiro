@@ -3,7 +3,9 @@
 import { CategoryType } from "@prisma/client";
 import { useActionState, useEffect } from "react";
 
+import { ColorPicker } from "@/features/configuracoes/components/color-picker";
 import { createCategoryAction } from "@/features/configuracoes/actions/create-category";
+import { IconPicker } from "@/features/configuracoes/components/icon-picker";
 import { updateCategoryAction } from "@/features/configuracoes/actions/update-category";
 import {
   SettingsFormState,
@@ -46,8 +48,8 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
   }, [onCancel, state.success]);
 
   return (
-    <form action={formAction} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="flex items-center justify-between">
+    <form action={formAction} className="space-y-5 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">
             {initialValues?.id ? "Editar categoria" : "Adicionar categoria"}
@@ -60,7 +62,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white"
           >
             Cancelar
           </button>
@@ -87,7 +89,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
           <input
             name="name"
             defaultValue={initialValues?.name ?? ""}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3"
             placeholder="Ex.: Mercado"
           />
           <FieldError message={state.fieldErrors?.name?.[0]} />
@@ -98,7 +100,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
           <select
             name="type"
             defaultValue={initialValues?.type ?? CategoryType.EXPENSE}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3"
           >
             <option value={CategoryType.INCOME}>Entrada</option>
             <option value={CategoryType.EXPENSE}>Saída</option>
@@ -107,28 +109,19 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
           </select>
           <FieldError message={state.fieldErrors?.type?.[0]} />
         </label>
+      </div>
 
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Cor</span>
-          <input
-            name="color"
-            defaultValue={initialValues?.color ?? ""}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            placeholder="#22C55E"
-          />
-          <FieldError message={state.fieldErrors?.color?.[0]} />
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-slate-700">Ícone</span>
-          <input
-            name="icon"
-            defaultValue={initialValues?.icon ?? ""}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2"
-            placeholder="cart, heart, gift..."
-          />
-          <FieldError message={state.fieldErrors?.icon?.[0]} />
-        </label>
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.85fr),minmax(0,1.15fr)]">
+        <ColorPicker
+          name="color"
+          defaultValue={initialValues?.color}
+          error={state.fieldErrors?.color?.[0]}
+        />
+        <IconPicker
+          name="icon"
+          defaultValue={initialValues?.icon}
+          error={state.fieldErrors?.icon?.[0]}
+        />
       </div>
 
       <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
@@ -144,7 +137,7 @@ export function CategoryForm({ initialValues, onCancel }: CategoryFormProps) {
       <div className="flex justify-end">
         <button
           type="submit"
-          className="rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-brand-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-500 sm:w-auto"
         >
           {initialValues?.id ? "Salvar alterações" : "Criar categoria"}
         </button>

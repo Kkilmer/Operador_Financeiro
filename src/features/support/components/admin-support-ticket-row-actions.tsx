@@ -55,7 +55,7 @@ export function AdminSupportTicketRowActions({
         rows={3}
         defaultValue={adminResponse ?? ""}
         className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700"
-        placeholder="Resposta opcional para o usuario"
+        placeholder="Resposta opcional para o usuário"
       />
 
       <SubmitButton label="Salvar" pendingLabel="Salvando..." className="justify-center px-3 py-2 text-xs" />

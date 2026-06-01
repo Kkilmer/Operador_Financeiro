@@ -13,7 +13,7 @@ export function AdminSectionNav({ active }: AdminSectionNavProps) {
           active === "usuarios" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-100"
         }`}
       >
-        Usuarios
+        Usuários
       </Link>
       <Link
         href="/admin/suporte"

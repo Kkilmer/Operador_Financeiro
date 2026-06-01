@@ -6,6 +6,10 @@ import {
 } from "@prisma/client";
 
 import { requireCurrentUserId } from "@/lib/auth/session";
+import {
+  getStrictFixedEntryKey,
+  getStructuralFixedEntryKey,
+} from "@/lib/application/financial-entry/fixed-entry-dedup";
 import { prisma } from "@/lib/prisma/client";
 
 function getReferenceMonthDate(referenceMonth?: string) {
@@ -31,18 +35,6 @@ function getMonthBounds(referenceMonth?: string) {
   const previousEnd = start;
 
   return { start, end, previousStart, previousEnd };
-}
-
-function getEntryKey(entry: {
-  description: string;
-  personId: string;
-  categoryId: string | null;
-}) {
-  return [
-    entry.description.trim().toLowerCase(),
-    entry.personId,
-    entry.categoryId ?? "",
-  ].join("::");
 }
 
 function shiftDateToMonth(sourceDate: Date, targetMonthStart: Date) {
@@ -80,6 +72,7 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
       description: true,
       amount: true,
       eventDate: true,
+      competenceDate: true,
       personId: true,
       accountId: true,
       categoryId: true,
@@ -95,6 +88,9 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
   const targetEntries = await prisma.financialEntry.findMany({
     where: {
       userId,
+      type: EntryType.EXPENSE,
+      frequencyProfile: EntryFrequencyProfile.FIXED,
+      isInstallment: false,
       competenceDate: {
         gte: start,
         lt: end,
@@ -103,18 +99,24 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
     select: {
       description: true,
       personId: true,
+      accountId: true,
       categoryId: true,
+      paymentMethod: true,
+      type: true,
+      competenceDate: true,
       id: true,
       origin: true,
       frequencyProfile: true,
       settlementStatus: true,
       createdAt: true,
       updatedAt: true,
+      deletedAt: true,
     },
   });
 
   const generatedEntriesToFix = targetEntries.filter((entry) => {
     return (
+      entry.deletedAt == null &&
       entry.origin === EntryOrigin.RECURRING_GENERATED &&
       entry.frequencyProfile === EntryFrequencyProfile.FIXED &&
       entry.settlementStatus === SettlementStatus.SETTLED &&
@@ -135,12 +137,32 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
     });
   }
 
-  const targetKeys = new Set(targetEntries.map((entry) => getEntryKey(entry)));
+  const targetStrictKeys = new Set(targetEntries.map((entry) => getStrictFixedEntryKey(entry)));
+  const targetStructuralCounts = new Map<string, number>();
+
+  for (const entry of targetEntries) {
+    const structuralKey = getStructuralFixedEntryKey(entry);
+    targetStructuralCounts.set(structuralKey, (targetStructuralCounts.get(structuralKey) ?? 0) + 1);
+  }
 
   for (const template of previousMonthFixedEntries) {
-    const key = getEntryKey(template);
+    const strictKey = getStrictFixedEntryKey({
+      ...template,
+      type: EntryType.EXPENSE,
+      competenceDate: start,
+    });
 
-    if (targetKeys.has(key)) {
+    if (targetStrictKeys.has(strictKey)) {
+      continue;
+    }
+
+    const structuralKey = getStructuralFixedEntryKey({
+      ...template,
+      type: EntryType.EXPENSE,
+      competenceDate: start,
+    });
+
+    if ((targetStructuralCounts.get(structuralKey) ?? 0) === 1) {
       continue;
     }
 
@@ -164,6 +186,7 @@ export async function ensureFixedEntriesForMonth(referenceMonth?: string) {
       },
     });
 
-    targetKeys.add(key);
+    targetStrictKeys.add(strictKey);
+    targetStructuralCounts.set(structuralKey, (targetStructuralCounts.get(structuralKey) ?? 0) + 1);
   }
 }

@@ -2,6 +2,7 @@ import { EntryType, Prisma, SettlementStatus } from "@prisma/client";
 
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
+import { formatInstallmentLabel } from "@/features/parcelas/utils/installment-label";
 
 type InstallmentStatusFilter = "all" | "pending" | "paid";
 
@@ -48,6 +49,7 @@ export async function listInstallmentCommitments(filters: InstallmentCommitmentF
 
   const financialEntryWhere: Prisma.FinancialEntryWhereInput = {
     userId,
+    deletedAt: null,
     type: EntryType.EXPENSE,
     isInstallment: true,
   };
@@ -141,7 +143,10 @@ export async function listInstallmentCommitments(filters: InstallmentCommitmentF
         installment.financialEntry.category?.name ??
         installment.installmentPurchase.category.name ??
         "Sem categoria",
-      installmentLabel: `${installment.number}/${installment.installmentPurchase.installmentCount}`,
+      installmentLabel: formatInstallmentLabel(
+        installment.number,
+        installment.installmentPurchase.installmentCount,
+      ),
       amount,
       status: isPaid ? "paid" : "pending",
       statusLabel: isPaid ? "Pago" : "Pendente",

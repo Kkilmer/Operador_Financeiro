@@ -32,16 +32,16 @@ export default async function SupportPage() {
     <main className="space-y-6">
       <div className="space-y-2">
         <p className="text-sm font-medium uppercase tracking-[0.25em] text-slate-400">Suporte</p>
-        <h1 className="text-3xl font-semibold text-slate-900">Solicitacoes</h1>
+        <h1 className="text-3xl font-semibold text-slate-900">Solicitações</h1>
         <p className="max-w-3xl text-sm text-slate-600">
-          Registre melhorias, bugs ou uma conversa direta com o admin. Voce acompanha apenas o que enviou.
+          Registre melhorias, bugs ou uma conversa direta com o administrador. Você acompanha apenas o que enviou.
         </p>
       </div>
 
       <SupportTicketForm />
 
       <SupportTicketsList
-        emptyMessage="Voce ainda nao enviou nenhuma solicitacao."
+        emptyMessage="Você ainda não enviou nenhuma solicitação."
         tickets={tickets.map((ticket) => ({
           id: ticket.id,
           type: ticket.type,

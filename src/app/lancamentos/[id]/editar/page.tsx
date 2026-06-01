@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { FinancialEntryEditForm } from "@/features/lancamentos/components/financial-entry-edit-form";
+import { formatInstallmentLabel } from "@/features/parcelas/utils/installment-label";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 
@@ -22,10 +23,23 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
   const { id } = await params;
   const userId = await requireCurrentUserId();
 
-  const entry = await prisma.financialEntry.findUnique({
-    where: { id },
+  const entry = await prisma.financialEntry.findFirst({
+    where: {
+      id,
+      userId,
+      deletedAt: null,
+    },
     include: {
-      installment: true,
+      installment: {
+        include: {
+          installmentPurchase: {
+            select: {
+              totalAmount: true,
+              installmentCount: true,
+            },
+          },
+        },
+      },
       person: {
         select: {
           id: true,
@@ -57,10 +71,6 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
   });
 
   if (!entry) {
-    notFound();
-  }
-
-  if (entry.userId !== userId) {
     notFound();
   }
 
@@ -154,6 +164,17 @@ export default async function EditFinancialEntryPage({ params }: EditFinancialEn
           frequencyProfile: entry.frequencyProfile,
           notes: entry.notes ?? "",
           isInstallmentEntry: Boolean(entry.installment),
+          installmentLabel: entry.installment
+            ? formatInstallmentLabel(
+              entry.installment.number,
+              entry.installment.installmentPurchase.installmentCount,
+            )
+            : null,
+          installmentNumber: entry.installment?.number ?? null,
+          installmentCount: entry.installment?.installmentPurchase.installmentCount ?? null,
+          installmentPurchaseTotalAmount: entry.installment
+            ? Number(entry.installment.installmentPurchase.totalAmount)
+            : null,
         }}
       />
     </main>

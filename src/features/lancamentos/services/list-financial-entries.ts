@@ -1,6 +1,7 @@
 import { ensureFixedEntriesForMonth } from "@/lib/application/financial-entry/ensure-fixed-entries-for-month";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
+import { EntryFrequencyProfile, EntryType, PaymentMethod, SettlementStatus } from "@prisma/client";
 
 function getReferenceMonthDate(referenceMonth?: string) {
   if (!referenceMonth) {
@@ -25,7 +26,21 @@ function getMonthRange(referenceMonth?: string) {
   return { start, end };
 }
 
-export async function listFinancialEntries(referenceMonth?: string) {
+export type FinancialEntryListFilters = {
+  settlementStatus?: SettlementStatus;
+  type?: EntryType;
+  recurrence?: EntryFrequencyProfile;
+  isInstallment?: boolean;
+  accountId?: string;
+  paymentMethod?: PaymentMethod;
+  categoryId?: string;
+  personId?: string;
+};
+
+export async function listFinancialEntries(
+  referenceMonth?: string,
+  filters: FinancialEntryListFilters = {},
+) {
   const userId = await requireCurrentUserId();
   const { start, end } = getMonthRange(referenceMonth);
 
@@ -34,16 +49,33 @@ export async function listFinancialEntries(referenceMonth?: string) {
   return prisma.financialEntry.findMany({
     where: {
       userId,
+      deletedAt: null,
       competenceDate: {
         gte: start,
         lt: end,
       },
+      ...(filters.settlementStatus ? { settlementStatus: filters.settlementStatus } : {}),
+      ...(filters.type ? { type: filters.type } : {}),
+      ...(filters.recurrence ? { frequencyProfile: filters.recurrence } : {}),
+      ...(typeof filters.isInstallment === "boolean" ? { isInstallment: filters.isInstallment } : {}),
+      ...(filters.accountId ? { accountId: filters.accountId } : {}),
+      ...(filters.paymentMethod ? { paymentMethod: filters.paymentMethod } : {}),
+      ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+      ...(filters.personId ? { personId: filters.personId } : {}),
     },
     include: {
       person: true,
       account: true,
       category: true,
-      installment: true,
+      installment: {
+        include: {
+          installmentPurchase: {
+            select: {
+              installmentCount: true,
+            },
+          },
+        },
+      },
     },
     orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
   });

@@ -5,6 +5,7 @@ import { UserRole } from "@prisma/client";
 import { z } from "zod";
 
 import { AuthFormState } from "@/features/auth/types/auth-form-state";
+import { errorResult, logServerError } from "@/lib/actions/action-result";
 import { isValidCpf, normalizeCpf } from "@/lib/auth/cpf";
 import { hashPassword, passwordNeedsRehash, verifyPassword } from "@/lib/auth/password";
 import { createUserSession } from "@/lib/auth/session";
@@ -22,11 +23,9 @@ export async function loginAction(_prevState: AuthFormState, formData: FormData)
   });
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Confira os dados e tente novamente.",
+    return errorResult("Confira os dados e tente novamente.", "AUTH_LOGIN_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   const user = await prisma.user.findUnique({
@@ -34,19 +33,13 @@ export async function loginAction(_prevState: AuthFormState, formData: FormData)
   });
 
   if (!user || !user.isActive) {
-    return {
-      success: false,
-      message: "E-mail ou senha inválidos.",
-    };
+    return errorResult("E-mail ou senha inválidos.", "AUTH_LOGIN_INVALID_CREDENTIALS");
   }
 
   const passwordIsValid = await verifyPassword(parsed.data.password, user.passwordHash);
 
   if (!passwordIsValid) {
-    return {
-      success: false,
-      message: "E-mail ou senha inválidos.",
-    };
+    return errorResult("E-mail ou senha inválidos.", "AUTH_LOGIN_INVALID_CREDENTIALS");
   }
 
   if (passwordNeedsRehash(user.passwordHash)) {
@@ -59,20 +52,28 @@ export async function loginAction(_prevState: AuthFormState, formData: FormData)
   }
 
   if (user.mustChangePassword) {
-    return {
-      success: false,
-      message: "Sua senha foi resetada. Use o link de redefinição enviado pelo administrador.",
-    };
+    return errorResult(
+      "Sua senha foi redefinida. Use o link enviado pelo administrador para cadastrar uma nova senha.",
+      "AUTH_LOGIN_PASSWORD_RESET_PENDING",
+    );
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      lastLoginAt: new Date(),
-    },
-  });
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+      },
+    });
 
-  await createUserSession(user.id);
+    await createUserSession(user.id);
+  } catch (error) {
+    logServerError("auth.login", error, { userId: user.id });
+    return errorResult(
+      "Não conseguimos concluir seu acesso agora. Tente novamente ou procure o suporte.",
+      "AUTH_LOGIN_FAILED",
+    );
+  }
 
   redirect("/dashboard");
 }
@@ -116,11 +117,9 @@ export async function registerAction(
   });
 
   if (!parsed.success) {
-    return {
-      success: false,
-      message: "Confira os dados e tente novamente.",
+    return errorResult("Confira os dados e tente novamente.", "AUTH_REGISTER_VALIDATION_ERROR", {
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   const email = parsed.data.email.toLowerCase();
@@ -130,10 +129,7 @@ export async function registerAction(
   });
 
   if (existingUser) {
-    return {
-      success: false,
-      message: "Já existe uma conta com esse e-mail.",
-    };
+    return errorResult("Já existe uma conta com esse e-mail.", "AUTH_REGISTER_DUPLICATE_EMAIL");
   }
 
   const existingCpf = await prisma.user.findUnique({
@@ -141,25 +137,30 @@ export async function registerAction(
   });
 
   if (existingCpf) {
-    return {
-      success: false,
-      message: "Já existe uma conta com esse CPF.",
-    };
+    return errorResult("Já existe uma conta com esse CPF.", "AUTH_REGISTER_DUPLICATE_CPF");
   }
 
-  const passwordHash = await hashPassword(parsed.data.password);
-  const user = await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email,
-      cpf,
-      passwordHash,
-      role: UserRole.USER,
-      isActive: true,
-    },
-  });
+  try {
+    const passwordHash = await hashPassword(parsed.data.password);
+    const user = await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email,
+        cpf,
+        passwordHash,
+        role: UserRole.USER,
+        isActive: true,
+      },
+    });
 
-  await createUserSession(user.id);
+    await createUserSession(user.id);
+  } catch (error) {
+    logServerError("auth.register", error, { email });
+    return errorResult(
+      "Não conseguimos criar sua conta agora. Tente novamente ou procure o suporte se o problema continuar.",
+      "AUTH_REGISTER_FAILED",
+    );
+  }
 
   redirect("/dashboard?status=registered");
 }

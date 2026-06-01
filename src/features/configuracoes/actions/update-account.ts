@@ -3,6 +3,7 @@
 import { AccountType, InstitutionType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { errorResult, logServerError, successResult } from "@/lib/actions/action-result";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { accountSettingsSchema } from "@/features/configuracoes/schemas/account-settings-schema";
@@ -48,11 +49,9 @@ export async function updateAccountAction(
   const parsed = accountSettingsSchema.safeParse(payload);
 
   if (!parsed.success || !parsed.data.id) {
-    return {
-      success: false,
-      message: "Revise os campos da conta ou cartão.",
+    return errorResult("Revise os campos da conta ou cartão.", "SETTINGS_ACCOUNT_UPDATE_VALIDATION_ERROR", {
       fieldErrors: parsed.success ? undefined : parsed.error.flatten().fieldErrors,
-    };
+    });
   }
 
   const duplicate = await prisma.financialAccount.findFirst({
@@ -67,10 +66,10 @@ export async function updateAccountAction(
   });
 
   if (duplicate) {
-    return {
-      success: false,
-      message: "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
-    };
+    return errorResult(
+      "Já existe uma conta ou cartão com esse nome para o titular selecionado.",
+      "SETTINGS_ACCOUNT_DUPLICATE",
+    );
   }
 
   const ownerPerson = await prisma.person.findFirst({
@@ -83,10 +82,7 @@ export async function updateAccountAction(
   });
 
   if (!ownerPerson) {
-    return {
-      success: false,
-      message: "Escolha um titular válido para essa conta ou cartão.",
-    };
+    return errorResult("Escolha um titular válido para essa conta ou cartão.", "SETTINGS_ACCOUNT_INVALID_OWNER");
   }
 
   const institution = parsed.data.institutionName?.trim()
@@ -111,34 +107,38 @@ export async function updateAccountAction(
   const isCreditCapableCard =
     parsed.data.type === AccountType.CREDIT_CARD || parsed.data.type === AccountType.MULTIPLE_CARD;
 
-  const updated = await prisma.financialAccount.updateMany({
-    where: { id: parsed.data.id, userId },
-    data: {
-      name: parsed.data.name,
-      type: parsed.data.type,
-      institutionId: institution?.id ?? null,
-      ownerPersonId: ownerPerson.id,
-      initialBalance: parsed.data.initialBalance,
-      creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
-      closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,
-      dueDay: isCreditCapableCard ? parsed.data.dueDay ?? null : null,
-      isActive: parsed.data.isActive,
-    },
-  });
+  let updated;
+
+  try {
+    updated = await prisma.financialAccount.updateMany({
+      where: { id: parsed.data.id, userId },
+      data: {
+        name: parsed.data.name,
+        type: parsed.data.type,
+        institutionId: institution?.id ?? null,
+        ownerPersonId: ownerPerson.id,
+        initialBalance: parsed.data.initialBalance,
+        creditLimit: isCreditCapableCard ? parsed.data.creditLimit ?? null : null,
+        closingDay: isCreditCapableCard ? parsed.data.closingDay ?? null : null,
+        dueDay: isCreditCapableCard ? parsed.data.dueDay ?? null : null,
+        isActive: parsed.data.isActive,
+      },
+    });
+  } catch (error) {
+    logServerError("settings.update-account", error, { userId, accountId: parsed.data.id });
+    return errorResult(
+      "Não conseguimos atualizar a conta ou cartão agora. Tente novamente ou use o suporte.",
+      "SETTINGS_ACCOUNT_UPDATE_FAILED",
+    );
+  }
 
   if (updated.count === 0) {
-    return {
-      success: false,
-      message: "Você não tem permissão para editar essa conta ou cartão.",
-    };
+    return errorResult("Você não tem permissão para editar essa conta ou cartão.", "SETTINGS_ACCOUNT_FORBIDDEN");
   }
 
   revalidatePath("/configuracoes");
   revalidatePath("/lancamentos");
   revalidatePath("/lancamentos/novo");
 
-  return {
-    success: true,
-    message: "Conta ou cartão atualizado com sucesso.",
-  };
+  return successResult("Conta ou cartão atualizado com sucesso.");
 }

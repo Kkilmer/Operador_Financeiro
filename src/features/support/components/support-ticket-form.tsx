@@ -29,9 +29,9 @@ export function SupportTicketForm() {
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-panel">
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-slate-900">Nova solicitacao</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Nova solicitação</h2>
         <p className="text-sm text-slate-600">
-          Envie uma melhoria, um bug ou uma mensagem direta para o admin.
+          Envie uma melhoria, um bug ou uma mensagem direta para o administrador.
         </p>
       </div>
 
@@ -52,12 +52,12 @@ export function SupportTicketForm() {
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Descricao</span>
+          <span className="text-sm font-medium text-slate-700">Descrição</span>
           <textarea
             name="description"
             rows={5}
             className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-            placeholder="Conte o que aconteceu ou o que voce gostaria de melhorar."
+            placeholder="Conte o que aconteceu ou o que você gostaria de melhorar."
           />
         </label>
 
@@ -73,7 +73,7 @@ export function SupportTicketForm() {
           </div>
         ) : null}
 
-        <SubmitButton label="Enviar solicitacao" pendingLabel="Enviando..." className="w-full justify-center md:w-auto" />
+        <SubmitButton label="Enviar solicitação" pendingLabel="Enviando..." className="w-full justify-center md:w-auto" />
       </form>
     </section>
   );

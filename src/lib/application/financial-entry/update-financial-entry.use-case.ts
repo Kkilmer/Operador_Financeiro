@@ -13,24 +13,35 @@ import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { normalizeDateInput, startOfMonth } from "@/lib/utils/date";
 import { UpdateFinancialEntryInput } from "@/features/lancamentos/schemas/update-financial-entry-schema";
+import {
+  buildInstallmentSequenceReorderPlan,
+  InstallmentSequenceOverflowError,
+} from "@/lib/application/financial-entry/reorder-installment-sequence";
 
-function parseInstallmentLabel(description: string) {
-  const match = description.match(/\((\d+)\/(\d+)\)\s*$/);
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    number: Number(match[1]),
-    total: Number(match[2]),
+export class InstallmentPurchaseAdjustmentRequiredError extends Error {
+  adjustment: {
+    currentTotalAmount: number;
+    currentTotalInstallments: number;
+    requestedInstallmentNumber: number;
+    suggestedTotalInstallments: number;
+    nextInstallmentNumber: number | null;
   };
+
+  constructor(adjustment: InstallmentPurchaseAdjustmentRequiredError["adjustment"]) {
+    super("Essa alteração ultrapassa o total atual da compra parcelada.");
+    this.name = "InstallmentPurchaseAdjustmentRequiredError";
+    this.adjustment = adjustment;
+  }
 }
 
 export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInput) {
   const userId = await requireCurrentUserId();
-  const existingEntry = await prisma.financialEntry.findUnique({
-    where: { id: input.id },
+  const existingEntry = await prisma.financialEntry.findFirst({
+    where: {
+      id: input.id,
+      userId,
+      deletedAt: null,
+    },
     include: {
       installment: {
         include: {
@@ -42,10 +53,6 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
 
   if (!existingEntry) {
     throw new Error("Esse lançamento não foi encontrado.");
-  }
-
-  if (existingEntry.userId !== userId) {
-    throw new Error("Você não tem permissão para editar esse lançamento.");
   }
 
   const isInstallmentEntry = Boolean(existingEntry.installment);
@@ -117,22 +124,6 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
   }
 
   if (isInstallmentEntry) {
-    const parsedInstallment = parseInstallmentLabel(input.description);
-
-    if (parsedInstallment) {
-      const existingInstallmentCount = existingEntry.installment?.installmentPurchase.installmentCount;
-
-      if (!existingInstallmentCount || parsedInstallment.total !== existingInstallmentCount) {
-        throw new Error(
-          `Para manter a compra parcelada consistente, o total desta parcela precisa continuar ${existingInstallmentCount ?? "o mesmo da compra"}.`,
-        );
-      }
-
-      if (parsedInstallment.number < 1 || parsedInstallment.number > existingInstallmentCount) {
-        throw new Error(`O número da parcela precisa ficar entre 1 e ${existingInstallmentCount}.`);
-      }
-    }
-
     await prisma.$transaction(async (tx) => {
       await tx.financialEntry.update({
         where: { id: input.id },
@@ -151,7 +142,6 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
       await tx.installment.update({
         where: { financialEntryId: input.id },
         data: {
-          number: parsedInstallment?.number,
           amount: input.amount,
           dueDate: eventDate,
           competenceDate,
@@ -161,6 +151,96 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
               : InstallmentStatus.OPEN,
         },
       });
+
+      if (
+        input.installmentNumber &&
+        existingEntry.installment &&
+        input.installmentNumber !== existingEntry.installment.number
+      ) {
+        const purchaseInstallments = await tx.installment.findMany({
+          where: {
+            userId,
+            installmentPurchaseId: existingEntry.installment.installmentPurchaseId,
+          },
+          include: {
+            financialEntry: {
+              select: {
+                deletedAt: true,
+                settlementStatus: true,
+              },
+            },
+          },
+        });
+        const installmentSequenceItems = purchaseInstallments.map((installment) => ({
+            id: installment.id,
+            number: installment.number,
+            dueDate: installment.dueDate,
+            competenceDate: installment.competenceDate,
+            createdAt: installment.createdAt,
+            isSettled:
+              installment.status === InstallmentStatus.SETTLED ||
+              installment.financialEntry.settlementStatus === SettlementStatus.SETTLED,
+            isDeleted: Boolean(installment.financialEntry.deletedAt),
+          }));
+        const totalInstallments =
+          input.adjustInstallmentPurchase && input.installmentPurchaseInstallmentCount
+            ? input.installmentPurchaseInstallmentCount
+            : existingEntry.installment.installmentPurchase.installmentCount;
+        let reorderPlan: ReturnType<typeof buildInstallmentSequenceReorderPlan>;
+
+        try {
+          reorderPlan = buildInstallmentSequenceReorderPlan({
+            installments: installmentSequenceItems,
+            currentInstallmentId: existingEntry.installment.id,
+            requestedNumber: input.installmentNumber,
+            totalInstallments,
+          });
+        } catch (error) {
+          if (error instanceof InstallmentSequenceOverflowError && !input.adjustInstallmentPurchase) {
+            throw new InstallmentPurchaseAdjustmentRequiredError({
+              currentTotalAmount: Number(existingEntry.installment.installmentPurchase.totalAmount),
+              currentTotalInstallments: existingEntry.installment.installmentPurchase.installmentCount,
+              requestedInstallmentNumber: input.installmentNumber,
+              suggestedTotalInstallments: error.requiredTotalInstallments,
+              nextInstallmentNumber:
+                error.requiredTotalInstallments > input.installmentNumber
+                  ? input.installmentNumber + 1
+                  : null,
+            });
+          }
+
+          throw error;
+        }
+
+        if (input.adjustInstallmentPurchase) {
+          await tx.installmentPurchase.update({
+            where: { id: existingEntry.installment.installmentPurchaseId },
+            data: {
+              totalAmount:
+                input.installmentPurchaseTotalAmount ??
+                Number(existingEntry.installment.installmentPurchase.totalAmount),
+              installmentCount: totalInstallments,
+              installmentAmount:
+                (input.installmentPurchaseTotalAmount ??
+                  Number(existingEntry.installment.installmentPurchase.totalAmount)) / totalInstallments,
+            },
+          });
+        }
+
+        for (const update of reorderPlan.temporaryUpdates) {
+          await tx.installment.update({
+            where: { id: update.id },
+            data: { number: update.number },
+          });
+        }
+
+        for (const update of reorderPlan.finalUpdates) {
+          await tx.installment.update({
+            where: { id: update.id },
+            data: { number: update.number },
+          });
+        }
+      }
     });
 
     return {

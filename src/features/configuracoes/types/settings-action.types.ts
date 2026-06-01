@@ -1,7 +1,8 @@
 export type SettingsFormState = {
   success: boolean;
   message?: string;
-  fieldErrors?: Record<string, string[]>;
+  errorCode?: string;
+  fieldErrors?: Record<string, string[] | undefined>;
 };
 
 export const initialSettingsFormState: SettingsFormState = {
