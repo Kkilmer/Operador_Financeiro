@@ -6,7 +6,7 @@ import { SummaryCard } from "@/components/ui/summary-card";
 import { BalanceCard } from "@/features/dashboard/components/balance-card";
 import { CategoryExpensesChart } from "@/features/dashboard/components/category-expenses-chart";
 import { InstallmentsCard } from "@/features/dashboard/components/installments-card";
-import { MonthFilterForm } from "@/features/dashboard/components/month-filter-form";
+import { MonthSelectorCards } from "@/features/dashboard/components/month-selector-cards";
 import { MonthlyFlowChart } from "@/features/dashboard/components/monthly-flow-chart";
 import { PersonSpendingRankingCard } from "@/features/dashboard/components/person-spending-ranking-card";
 import { RecentTransactions } from "@/features/dashboard/components/recent-transactions";
@@ -39,17 +39,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-4 rounded-3xl bg-ink-950 px-6 py-6 text-white xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Home</p>
-          <h1 className="mt-2 text-3xl font-semibold">Resumo do mês</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-300">
-            Veja rapidamente saldo disponível, entradas, saídas, dinheiro guardado, parcelas do mês e os últimos lançamentos.
-          </p>
-        </div>
+      <section className="space-y-6 rounded-3xl bg-ink-950 px-5 py-6 text-white sm:px-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Home</p>
+            <h1 className="mt-2 text-3xl font-semibold">Resumo do mês</h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-300">
+              Veja rapidamente saldo disponível, entradas, saídas, dinheiro guardado, parcelas do mês e os últimos lançamentos.
+            </p>
+          </div>
 
-        <div className="flex flex-col gap-3">
-          <MonthFilterForm selectedMonth={summary.referenceMonth} dark />
           <div className="flex flex-wrap gap-3">
             <Link
               href="/lancamentos/novo"
@@ -65,6 +64,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </Link>
           </div>
         </div>
+
+        <MonthSelectorCards selectedMonth={summary.referenceMonth} selectedYear={params?.year} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.35fr,0.65fr]">

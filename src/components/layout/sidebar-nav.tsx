@@ -17,6 +17,7 @@ const items = [
   { href: "/dashboard", label: "Dashboard", match: "exact" },
   { href: "/lancamentos", label: "Lançamentos", match: "section" },
   { href: "/parcelas", label: "Parcelas", match: "exact" },
+  { href: "/relatorios", label: "Relatórios", match: "exact" },
   { href: "/suporte", label: "Suporte", match: "exact" },
   { href: "/configuracoes", label: "Configurações", match: "exact" },
   { href: "/lancamentos/novo", label: "Novo lançamento", match: "exact" },

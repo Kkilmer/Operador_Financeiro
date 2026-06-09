@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
-import { MonthFilterForm } from "@/features/dashboard/components/month-filter-form";
+import { MonthSelectorCards } from "@/features/dashboard/components/month-selector-cards";
 import { FinancialEntryFilters } from "@/features/lancamentos/components/financial-entry-filters";
 import { FinancialEntryRemoveButton } from "@/features/lancamentos/components/financial-entry-remove-button";
 import { EntryStatusCell } from "@/features/lancamentos/components/entry-status-cell";
@@ -114,6 +114,21 @@ export default async function FinancialEntriesPage({ searchParams }: FinancialEn
   const [year, month] = selectedMonth.split("-").map(Number);
   const referenceDate = new Date(year, month - 1, 1);
   const hasFilters = hasActiveFilters(filters);
+  const preservedMonthFilters = {
+    entryStatus: filters.settlementStatus,
+    type: filters.type,
+    recurrence: filters.recurrence,
+    installment:
+      typeof filters.isInstallment === "boolean"
+        ? filters.isInstallment
+          ? "parcelados"
+          : "nao-parcelados"
+        : undefined,
+    accountId: filters.accountId,
+    paymentMethod: filters.paymentMethod,
+    categoryId: filters.categoryId,
+    personId: filters.personId,
+  };
 
   return (
     <main className="space-y-6">
@@ -127,7 +142,6 @@ export default async function FinancialEntriesPage({ searchParams }: FinancialEn
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <MonthFilterForm selectedMonth={selectedMonth} />
           <Link
             href="/lancamentos/novo"
             className="rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
@@ -135,6 +149,17 @@ export default async function FinancialEntriesPage({ searchParams }: FinancialEn
             Novo lançamento
           </Link>
         </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <MonthSelectorCards
+          selectedMonth={selectedMonth}
+          basePath="/lancamentos"
+          queryParams={preservedMonthFilters}
+          includeYearParam={false}
+          helperText="Escolha o mês para atualizar a listagem sem perder os filtros aplicados."
+          tone="light"
+        />
       </section>
 
       {status === "created" ? (
