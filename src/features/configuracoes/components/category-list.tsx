@@ -90,7 +90,7 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
               <button
                 type="button"
                 onClick={() => onEdit(category)}
-                className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 Editar
               </button>
@@ -104,7 +104,7 @@ export function CategoryList({ categories, onEdit }: CategoryListProps) {
                       router.refresh();
                     })
                   }
-                  className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full border border-amber-200 px-3 py-1.5 text-sm font-medium text-amber-700 transition hover:bg-amber-50 disabled:opacity-60"
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-full border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-50 disabled:opacity-60"
                 >
                   Inativar
                 </button>

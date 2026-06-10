@@ -24,7 +24,6 @@ function buildExportHref(path: string, query: ReportQueryParams) {
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const query = searchParams ? await searchParams : {};
   const report = await getFinancialReport(query);
-  const pdfHref = buildExportHref("/relatorios/exportar/pdf", query);
   const csvHref = buildExportHref("/relatorios/exportar/csv", query);
 
   return (
@@ -49,7 +48,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
           </div>
         </div>
 
-        <ReportExportButtons pdfHref={pdfHref} csvHref={csvHref} />
+        <ReportExportButtons csvHref={csvHref} />
       </section>
 
       {report.period.warning || report.scope.warning ? (

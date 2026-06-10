@@ -52,13 +52,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <div className="flex flex-wrap gap-3">
             <Link
               href="/lancamentos/novo"
-              className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
+              className="inline-flex min-h-11 items-center rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
             >
               Novo lançamento
             </Link>
             <Link
               href={`/lancamentos?month=${summary.referenceMonth}`}
-              className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
+              className="inline-flex min-h-11 items-center rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900"
             >
               Ver lançamentos
             </Link>

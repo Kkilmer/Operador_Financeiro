@@ -125,7 +125,7 @@ export function MonthSelectorCards({
             })}
             aria-label={`Ver meses de ${previousYear}`}
             className={cn(
-              "inline-flex size-9 items-center justify-center rounded-full text-sm font-semibold transition",
+              "inline-flex size-11 items-center justify-center rounded-full text-sm font-semibold transition",
               isDark
                 ? "text-slate-300 hover:bg-slate-900 hover:text-white"
                 : "text-slate-600 hover:bg-white hover:text-slate-900",
@@ -151,7 +151,7 @@ export function MonthSelectorCards({
             })}
             aria-label={`Ver meses de ${nextYear}`}
             className={cn(
-              "inline-flex size-9 items-center justify-center rounded-full text-sm font-semibold transition",
+              "inline-flex size-11 items-center justify-center rounded-full text-sm font-semibold transition",
               isDark
                 ? "text-slate-300 hover:bg-slate-900 hover:text-white"
                 : "text-slate-600 hover:bg-white hover:text-slate-900",
@@ -163,7 +163,7 @@ export function MonthSelectorCards({
       </div>
 
       <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
-        <div className="flex min-w-max gap-2 xl:min-w-0 xl:grid xl:grid-cols-12">
+        <div className="flex min-w-max gap-2 lg:min-w-0 lg:grid lg:grid-cols-12">
           {months.map((month) => {
             const monthValue = `${year}-${month.value}`;
             const active = month.value === parsed.month && year === parsed.year;
@@ -180,7 +180,7 @@ export function MonthSelectorCards({
                 })}
                 aria-current={active ? "date" : undefined}
                 className={cn(
-                  "inline-flex min-h-12 min-w-16 items-center justify-center rounded-2xl border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 xl:min-w-0 xl:px-2",
+                  "inline-flex min-h-12 min-w-16 items-center justify-center rounded-2xl border px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 lg:min-w-0 lg:px-2",
                   isDark ? "focus-visible:ring-white/60" : "focus-visible:ring-brand-200",
                   active
                     ? isDark

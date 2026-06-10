@@ -59,7 +59,7 @@ export default async function InstallmentsPage({ searchParams }: InstallmentsPag
               type="month"
               name="month"
               defaultValue={commitments.filters.month}
-              className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
+              className="min-h-11 w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
             />
           </label>
 
@@ -68,7 +68,7 @@ export default async function InstallmentsPage({ searchParams }: InstallmentsPag
             <select
               name="personId"
               defaultValue={commitments.filters.personId}
-              className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
+              className="min-h-11 w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
             >
               <option value="">Todas</option>
               {people.map((person) => (
@@ -84,7 +84,7 @@ export default async function InstallmentsPage({ searchParams }: InstallmentsPag
             <select
               name="status"
               defaultValue={commitments.filters.status}
-              className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
+              className="min-h-11 w-full min-w-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
             >
               <option value="all">Todos</option>
               <option value="pending">Pendentes</option>

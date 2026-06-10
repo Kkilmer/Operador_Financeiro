@@ -9,9 +9,5 @@ function normalizeBaseUrl(value?: string | null) {
 }
 
 export function getPublicAppUrl() {
-  return (
-    normalizeBaseUrl(process.env.APP_URL) ??
-    normalizeBaseUrl(process.env.RENDER_EXTERNAL_URL) ??
-    LOCAL_FALLBACK_URL
-  );
+  return normalizeBaseUrl(process.env.APP_URL) ?? LOCAL_FALLBACK_URL;
 }

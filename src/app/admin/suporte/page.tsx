@@ -64,7 +64,11 @@ export default async function AdminSupportPage({ searchParams }: AdminSupportPag
       <form className="grid grid-cols-1 gap-4 rounded-3xl border border-slate-200 bg-white p-4 md:grid-cols-3">
         <label className="block space-y-2">
           <span className="text-sm font-medium text-slate-700">Tipo</span>
-          <select name="type" defaultValue={type} className="w-full rounded-2xl border border-slate-300 px-4 py-3">
+          <select
+            name="type"
+            defaultValue={type}
+            className="min-h-11 w-full rounded-2xl border border-slate-300 px-4 py-3"
+          >
             <option value="ALL">Todos</option>
             {supportTicketTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -76,7 +80,11 @@ export default async function AdminSupportPage({ searchParams }: AdminSupportPag
 
         <label className="block space-y-2">
           <span className="text-sm font-medium text-slate-700">Status</span>
-          <select name="status" defaultValue={status} className="w-full rounded-2xl border border-slate-300 px-4 py-3">
+          <select
+            name="status"
+            defaultValue={status}
+            className="min-h-11 w-full rounded-2xl border border-slate-300 px-4 py-3"
+          >
             <option value="ALL">Todos</option>
             {supportTicketStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -89,7 +97,7 @@ export default async function AdminSupportPage({ searchParams }: AdminSupportPag
         <div className="flex items-end">
           <button
             type="submit"
-            className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="min-h-11 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
           >
             Aplicar filtros
           </button>

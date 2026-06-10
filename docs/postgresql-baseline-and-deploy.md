@@ -10,7 +10,6 @@ O projeto já está modelado em PostgreSQL, mas o histórico ativo de migrations
 - o histórico antigo foi arquivado em `prisma/migrations_sqlite_legacy/`
 - `migration_lock.toml` passa a declarar `provider = "postgresql"`
 - o container de produção executa `prisma migrate deploy` antes de subir o Next.js
-- o projeto passa a ter um `render.yaml` para provisionamento repetível no Render
 
 ## O que NÃO foi feito
 
@@ -39,13 +38,15 @@ npx prisma migrate deploy
 
 Como a baseline já representa o estado atual completo do schema, o ambiente sobe sem intervenção manual de SQL.
 
-## Fluxo recomendado para Render
+## Fluxo recomendado para produção com PostgreSQL
 
-1. Criar o banco pelo `render.yaml` ou manualmente no Render.
-2. Subir o Web Service com Docker.
-3. Configurar `DATABASE_URL` com a connection string do banco Render.
-4. O container executará `prisma migrate deploy` automaticamente no start.
-5. Depois disso, o app sobe com `node server.js`.
+1. Criar um banco PostgreSQL e manter a connection string em `DATABASE_URL`.
+2. Configurar `APP_URL` com a URL pública do app.
+3. Gerar o Prisma Client com `npx prisma generate`.
+4. Aplicar migrations com `npx prisma migrate deploy`.
+5. Subir o app com `npm run start` ou com o container Docker.
+
+O script `scripts/start-production.mjs` executa `prisma migrate deploy` antes de iniciar o servidor standalone do Next.js quando usado no container.
 
 ## Comandos principais
 

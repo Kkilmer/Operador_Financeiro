@@ -41,7 +41,7 @@ export function AdminSupportTicketRowActions({
       <select
         name="status"
         defaultValue={status}
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700"
+        className="min-h-11 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700"
       >
         {supportTicketStatusOptions.map((option) => (
           <option key={option.value} value={option.value}>
@@ -54,11 +54,11 @@ export function AdminSupportTicketRowActions({
         name="adminResponse"
         rows={3}
         defaultValue={adminResponse ?? ""}
-        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700"
+        className="min-h-24 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-700"
         placeholder="Resposta opcional para o usuário"
       />
 
-      <SubmitButton label="Salvar" pendingLabel="Salvando..." className="justify-center px-3 py-2 text-xs" />
+      <SubmitButton label="Salvar" pendingLabel="Salvando..." className="min-h-11 justify-center px-3 py-2 text-xs" />
 
       {state.message ? (
         <p className={`text-xs ${state.success ? "text-emerald-700" : "text-rose-700"}`}>{state.message}</p>

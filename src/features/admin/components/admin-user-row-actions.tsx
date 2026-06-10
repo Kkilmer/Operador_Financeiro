@@ -16,6 +16,7 @@ import {
 
 const initialToggleState: AdminUserActionState = { success: false };
 const initialResetState: ResetUserPasswordState = { success: false };
+const CLIPBOARD_TIMEOUT_IN_MS = 1500;
 
 type AdminUserRowActionsProps = {
   userId: string;
@@ -29,28 +30,48 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
   const [copied, setCopied] = useState(false);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
 
+  function copyWithTextarea(resetUrl: string) {
+    const textarea = document.createElement("textarea");
+    textarea.value = resetUrl;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    try {
+      return document.execCommand("copy");
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
+
   async function handleCopyResetUrl(resetUrl: string) {
+    let copiedWithClipboard = false;
+
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(resetUrl);
-        setCopied(true);
-        setCopyMessage("Link copiado com sucesso.");
-        return;
+        await Promise.race([
+          navigator.clipboard.writeText(resetUrl),
+          new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error("clipboard_timeout")), CLIPBOARD_TIMEOUT_IN_MS);
+          }),
+        ]);
+        copiedWithClipboard = true;
       }
+    } catch {
+      copiedWithClipboard = false;
+    }
 
-      const textarea = document.createElement("textarea");
-      textarea.value = resetUrl;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "absolute";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      textarea.setSelectionRange(0, textarea.value.length);
+    if (copiedWithClipboard) {
+      setCopied(true);
+      setCopyMessage("Link copiado com sucesso.");
+      return;
+    }
 
-      const copiedWithFallback = document.execCommand("copy");
-      document.body.removeChild(textarea);
-
-      if (copiedWithFallback) {
+    try {
+      if (copyWithTextarea(resetUrl)) {
         setCopied(true);
         setCopyMessage("Link copiado com sucesso.");
         return;
@@ -81,7 +102,7 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
       <div className="flex flex-wrap gap-2">
         <Link
           href={`/admin/usuarios/${userId}/editar`}
-          className="rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
         >
           Editar
         </Link>
@@ -91,7 +112,7 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
           <input type="hidden" name="nextActive" value={isActive ? "false" : "true"} />
           <button
             type="submit"
-            className="rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
           >
             {isActive ? "Desativar" : "Reativar"}
           </button>
@@ -101,7 +122,7 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
           <input type="hidden" name="userId" value={userId} />
           <button
             type="submit"
-            className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
           >
             Resetar senha
           </button>
@@ -125,12 +146,12 @@ export function AdminUserRowActions({ userId, isActive }: AdminUserRowActionsPro
               <input
                 readOnly
                 value={resetState.resetUrl}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
+                className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
               />
               <button
                 type="button"
                 onClick={() => handleCopyResetUrl(resetState.resetUrl ?? "")}
-                className="rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-white"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-white"
               >
                 {copied ? "Link copiado" : "Copiar link"}
               </button>

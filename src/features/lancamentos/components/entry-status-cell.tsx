@@ -71,7 +71,7 @@ export function EntryStatusCell({
               }
             })
           }
-          className="inline-flex min-h-9 items-center rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center rounded-full border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {pending ? "Salvando..." : "Marcar como pago"}
         </button>

@@ -24,7 +24,7 @@ export function SettingsPage({ accounts, categories, people, paymentMethods }: S
         </div>
       </section>
 
-      <div className="grid gap-6">
+      <div className="grid min-w-0 gap-6">
         <AccountSettingsSection accounts={accounts} people={people} />
         <CategorySettingsSection categories={categories} />
         <PaymentMethodSettingsSection paymentMethods={paymentMethods} />

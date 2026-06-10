@@ -47,9 +47,9 @@ export function AccountSettingsSection({ accounts, people }: AccountSettingsSect
   );
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
+    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold text-slate-900">Contas e cartões</h2>
           <p className="mt-1 text-sm text-slate-500">
             Gerencie as origens de dinheiro e os cartões usados nos lançamentos.
@@ -58,7 +58,7 @@ export function AccountSettingsSection({ accounts, people }: AccountSettingsSect
         <button
           type="button"
           onClick={() => setEditingAccountId("new")}
-          className="rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500 sm:w-auto"
         >
           Adicionar conta ou cartão
         </button>

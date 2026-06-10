@@ -6,9 +6,21 @@
   color-scheme: light;
 }
 
+html {
+  min-height: 100%;
+  background: rgb(241 245 249);
+}
+
 body {
   @apply bg-slate-100 text-slate-900 antialiased;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -20,4 +32,12 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

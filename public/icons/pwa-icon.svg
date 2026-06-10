@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Operador Financeiro">
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  <circle cx="368" cy="132" r="58" fill="#22c55e" opacity="0.95"/>
+  <path fill="#ffffff" d="M144 152c0-17.7 14.3-32 32-32h160c17.7 0 32 14.3 32 32v208c0 17.7-14.3 32-32 32H176c-17.7 0-32-14.3-32-32V152Zm48 40v40h128v-40H192Zm0 80v32h48v-32h-48Zm80 0v32h48v-32h-48Zm-80 64v32h48v-32h-48Zm80 0v32h48v-32h-48Z"/>
+  <path fill="#22c55e" d="M174 140c0-11 9-20 20-20h124c11 0 20 9 20 20v14H174v-14Z"/>
+</svg>

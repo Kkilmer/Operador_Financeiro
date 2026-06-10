@@ -2,8 +2,6 @@
 
 import { useState, useTransition } from "react";
 
-type ExportKind = "pdf" | "csv";
-
 type ExportStatus = {
   tone: "success" | "error";
   message: string;
@@ -32,30 +30,23 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export function ReportExportButtons({
-  pdfHref,
   csvHref,
 }: {
-  pdfHref: string;
   csvHref: string;
 }) {
   const [status, setStatus] = useState<ExportStatus | null>(null);
-  const [pendingKind, setPendingKind] = useState<ExportKind | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  function exportReport(kind: ExportKind) {
-    const href = kind === "pdf" ? pdfHref : csvHref;
-    const filename = kind === "pdf" ? "relatorio-financeiro.pdf" : "relatorio-financeiro.csv";
-    const fallbackMessage =
-      kind === "pdf"
-        ? "Não conseguimos exportar o PDF agora. Tente novamente ou procure o suporte."
-        : "Não conseguimos exportar o CSV agora. Tente novamente ou procure o suporte.";
+  function exportCsv() {
+    const fallbackMessage = "Não conseguimos exportar o CSV agora. Tente novamente ou procure o suporte.";
 
     setStatus(null);
-    setPendingKind(kind);
+    setIsExporting(true);
 
     startTransition(async () => {
       try {
-        const response = await fetch(href, {
+        const response = await fetch(csvHref, {
           method: "GET",
           credentials: "same-origin",
         });
@@ -78,7 +69,7 @@ export function ReportExportButtons({
 
         const contentType = response.headers.get("content-type") ?? "";
 
-        if (!contentType.includes(kind === "pdf" ? "application/pdf" : "text/csv")) {
+        if (!contentType.includes("text/csv")) {
           setStatus({
             tone: "error",
             message: fallbackMessage,
@@ -86,10 +77,10 @@ export function ReportExportButtons({
           return;
         }
 
-        downloadBlob(await response.blob(), filename);
+        downloadBlob(await response.blob(), "relatorio-financeiro.csv");
         setStatus({
           tone: "success",
-          message: `${kind === "pdf" ? "PDF" : "CSV"} gerado com sucesso.`,
+          message: "CSV gerado com sucesso.",
         });
       } catch {
         setStatus({
@@ -97,31 +88,23 @@ export function ReportExportButtons({
           message: fallbackMessage,
         });
       } finally {
-        setPendingKind(null);
+        setIsExporting(false);
       }
     });
   }
 
-  const disabled = isPending || pendingKind !== null;
+  const disabled = isPending || isExporting;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={() => exportReport("pdf")}
+          onClick={exportCsv}
           disabled={disabled}
-          className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-11 rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pendingKind === "pdf" ? "Gerando PDF..." : "Exportar PDF"}
-        </button>
-        <button
-          type="button"
-          onClick={() => exportReport("csv")}
-          disabled={disabled}
-          className="rounded-full border border-slate-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {pendingKind === "csv" ? "Gerando CSV..." : "Exportar CSV"}
+          {isExporting ? "Gerando CSV..." : "Exportar CSV"}
         </button>
       </div>
 

@@ -91,7 +91,7 @@ export function MonthlyFlowChart({
             <select
               name="year"
               defaultValue={String(chartYear)}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
+              className="min-h-11 rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700"
             >
               {availableYears.map((year) => (
                 <option key={year} value={year}>
@@ -102,7 +102,7 @@ export function MonthlyFlowChart({
           </label>
           <button
             type="submit"
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="min-h-11 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Aplicar ano
           </button>

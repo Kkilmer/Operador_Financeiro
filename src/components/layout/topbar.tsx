@@ -17,7 +17,7 @@ export function Topbar({ userName, onOpenMenu }: TopbarProps) {
           type="button"
           aria-label="Abrir menu"
           onClick={onOpenMenu}
-          className="inline-flex size-11 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50 lg:hidden"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-slate-200 text-lg text-slate-700 transition hover:bg-slate-50 lg:hidden"
         >
           ☰
         </button>
@@ -34,20 +34,20 @@ export function Topbar({ userName, onOpenMenu }: TopbarProps) {
         </span>
         <Link
           href="/lancamentos"
-          className="hidden rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
+          className="hidden min-h-11 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
         >
           Ver lançamentos
         </Link>
         <Link
           href="/lancamentos/novo"
-          className="inline-flex rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
+          className="inline-flex min-h-11 items-center rounded-full bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-500"
         >
           Novo lançamento
         </Link>
         <form action={logoutAction}>
           <button
             type="submit"
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="min-h-11 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Sair
           </button>

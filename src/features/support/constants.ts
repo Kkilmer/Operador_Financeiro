@@ -6,7 +6,7 @@ export const supportTicketTypeOptions = [
 
 export const supportTicketStatusOptions = [
   { value: "OPEN", label: "Aberto" },
-  { value: "IN_REVIEW", label: "Em analise" },
+  { value: "IN_REVIEW", label: "Em análise" },
   { value: "RESOLVED", label: "Resolvido" },
   { value: "ARCHIVED", label: "Arquivado" },
 ] as const;
