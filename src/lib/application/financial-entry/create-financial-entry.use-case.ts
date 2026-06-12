@@ -11,8 +11,13 @@ import {
 
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
-import { addMonths, normalizeDateInput, startOfMonth } from "@/lib/utils/date";
+import { normalizeDateInput, startOfMonth } from "@/lib/utils/date";
 import { CreateFinancialEntryInput } from "@/features/lancamentos/schemas/create-financial-entry-schema";
+import {
+  calculateCreditCardBillingDate,
+  isCreditCardPaymentMethod,
+  requireCreditCardBillingConfig,
+} from "@/lib/application/financial-entry/credit-card-billing";
 
 function resolveSettlementStatus(
   paymentMethod: PaymentMethod,
@@ -43,7 +48,6 @@ function splitInstallments(totalAmount: number, installmentCount: number) {
 export async function createFinancialEntryUseCase(input: CreateFinancialEntryInput) {
   const userId = await requireCurrentUserId();
   const eventDate = normalizeDateInput(input.eventDate);
-  const competenceDate = startOfMonth(eventDate);
   const isExpense = input.type === EntryType.EXPENSE;
   const paymentMethod = isExpense ? input.paymentMethod! : input.paymentMethod ?? PaymentMethod.OTHER;
   const frequencyProfile = isExpense
@@ -115,6 +119,15 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
     throw new Error("Dinheiro não pode ser usado com pagamento no crédito.");
   }
 
+  const creditBillingConfig =
+    isExpense && isCreditCardPaymentMethod(paymentMethod) ? requireCreditCardBillingConfig(account) : null;
+  const competenceDate = creditBillingConfig
+    ? calculateCreditCardBillingDate({
+        purchaseDate: eventDate,
+        ...creditBillingConfig,
+      }).competenceDate
+    : startOfMonth(eventDate);
+
   if (!input.isInstallment) {
     const entry = await prisma.financialEntry.create({
       data: {
@@ -159,16 +172,21 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
       },
     });
 
-      for (let index = 0; index < amounts.length; index += 1) {
-        const installmentDate = addMonths(eventDate, index);
-        const installmentCompetence = startOfMonth(installmentDate);
-        const entry = await tx.financialEntry.create({
-          data: {
-            description: input.description,
-            userId,
-            amount: amounts[index],
-            eventDate: installmentDate,
-          competenceDate: installmentCompetence,
+    const installmentBillingConfig = creditBillingConfig ?? requireCreditCardBillingConfig(account);
+
+    for (let index = 0; index < amounts.length; index += 1) {
+      const installmentBilling = calculateCreditCardBillingDate({
+        purchaseDate: eventDate,
+        ...installmentBillingConfig,
+        installmentOffset: index,
+      });
+      const entry = await tx.financialEntry.create({
+        data: {
+          description: input.description,
+          userId,
+          amount: amounts[index],
+          eventDate,
+          competenceDate: installmentBilling.competenceDate,
           type: EntryType.EXPENSE,
           personId: input.personId,
           accountId: input.accountId,
@@ -182,15 +200,15 @@ export async function createFinancialEntryUseCase(input: CreateFinancialEntryInp
         },
       });
 
-          await tx.installment.create({
-            data: {
-              userId,
-              installmentPurchaseId: installmentPurchase.id,
+      await tx.installment.create({
+        data: {
+          userId,
+          installmentPurchaseId: installmentPurchase.id,
           financialEntryId: entry.id,
           number: index + 1,
           amount: amounts[index],
-          dueDate: installmentDate,
-          competenceDate: installmentCompetence,
+          dueDate: installmentBilling.dueDate,
+          competenceDate: installmentBilling.competenceDate,
           status: InstallmentStatus.OPEN,
         },
       });

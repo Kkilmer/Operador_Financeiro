@@ -14,6 +14,11 @@ import { prisma } from "@/lib/prisma/client";
 import { normalizeDateInput, startOfMonth } from "@/lib/utils/date";
 import { UpdateFinancialEntryInput } from "@/features/lancamentos/schemas/update-financial-entry-schema";
 import {
+  calculateCreditCardBillingDate,
+  isCreditCardPaymentMethod,
+  requireCreditCardBillingConfig,
+} from "@/lib/application/financial-entry/credit-card-billing";
+import {
   buildInstallmentSequenceReorderPlan,
   InstallmentSequenceOverflowError,
 } from "@/lib/application/financial-entry/reorder-installment-sequence";
@@ -57,7 +62,6 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
 
   const isInstallmentEntry = Boolean(existingEntry.installment);
   const eventDate = normalizeDateInput(input.eventDate);
-  const competenceDate = startOfMonth(eventDate);
   const isExpense = input.type === EntryType.EXPENSE;
   const paymentMethod = isExpense ? input.paymentMethod! : input.paymentMethod ?? PaymentMethod.OTHER;
   const frequencyProfile = isExpense
@@ -123,6 +127,19 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
     throw new Error("Dinheiro não pode ser usado com pagamento no crédito.");
   }
 
+  const creditBillingConfig =
+    isExpense && isCreditCardPaymentMethod(paymentMethod) ? requireCreditCardBillingConfig(account) : null;
+  const installmentNumber = isInstallmentEntry ? input.installmentNumber ?? existingEntry.installment?.number ?? 1 : 1;
+  const creditBilling = creditBillingConfig
+    ? calculateCreditCardBillingDate({
+        purchaseDate: eventDate,
+        ...creditBillingConfig,
+        installmentOffset: isInstallmentEntry ? installmentNumber - 1 : 0,
+      })
+    : null;
+  const competenceDate = creditBilling?.competenceDate ?? startOfMonth(eventDate);
+  const dueDate = creditBilling?.dueDate ?? eventDate;
+
   if (isInstallmentEntry) {
     await prisma.$transaction(async (tx) => {
       await tx.financialEntry.update({
@@ -143,7 +160,7 @@ export async function updateFinancialEntryUseCase(input: UpdateFinancialEntryInp
         where: { financialEntryId: input.id },
         data: {
           amount: input.amount,
-          dueDate: eventDate,
+          dueDate,
           competenceDate,
           status:
             settlementStatus === SettlementStatus.SETTLED

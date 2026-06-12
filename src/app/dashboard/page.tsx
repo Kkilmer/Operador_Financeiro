@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionCard } from "@/components/ui/section-card";
 import { SummaryCard } from "@/components/ui/summary-card";
 import { BalanceCard } from "@/features/dashboard/components/balance-card";
+import { CashAndCardSummaryCard } from "@/features/dashboard/components/cash-and-card-summary-card";
 import { CategoryExpensesChart } from "@/features/dashboard/components/category-expenses-chart";
 import { InstallmentsCard } from "@/features/dashboard/components/installments-card";
 import { MonthSelectorCards } from "@/features/dashboard/components/month-selector-cards";
@@ -81,6 +82,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <SummaryCard label="Dinheiro guardado" value={summary.totalSaved} />
         </div>
       </section>
+
+      <CashAndCardSummaryCard summary={summary.cashAndCardSummary} />
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
         <CategoryExpensesChart items={summary.categoryExpenses} />

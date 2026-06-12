@@ -1,9 +1,14 @@
-import { EntryFrequencyProfile, EntryType, PaymentMethod, Prisma } from "@prisma/client";
+import { EntryFrequencyProfile, EntryType, PaymentMethod, Prisma, SettlementStatus } from "@prisma/client";
 
 import { ensureFixedEntriesForMonth } from "@/lib/application/financial-entry/ensure-fixed-entries-for-month";
 import { requireCurrentUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma/client";
 import { DashboardSummary } from "@/features/dashboard/types/dashboard.types";
+import {
+  calculateCashAndCardSummary,
+  groupFutureCreditInvoices,
+  shouldIncludeEntryInAvailableCash,
+} from "@/features/dashboard/utils/cash-and-card-summary";
 import { toMapTotals } from "@/features/dashboard/utils/dashboard-aggregations";
 import { calculateMonthlyBalanceSnapshot } from "@/features/dashboard/utils/monthly-balance";
 import { formatInstallmentLabel } from "@/features/parcelas/utils/installment-label";
@@ -62,12 +67,26 @@ function formatEntryDate(date: Date) {
   }).format(date);
 }
 
+function getInvoiceDueDate(competenceDate: Date, dueDay: number | null) {
+  if (!dueDay) {
+    return null;
+  }
+
+  return new Date(
+    competenceDate.getFullYear(),
+    competenceDate.getMonth(),
+    Math.min(dueDay, new Date(competenceDate.getFullYear(), competenceDate.getMonth() + 1, 0).getDate()),
+  );
+}
+
 export async function getDashboardSummary(referenceMonth?: string, requestedYear?: string): Promise<DashboardSummary> {
   const userId = await requireCurrentUserId();
   const { start, end } = getMonthBounds(referenceMonth);
   const chartYear = getChartYear(referenceMonth, requestedYear);
   const chartStart = new Date(chartYear, 0, 1);
   const chartEnd = new Date(chartYear + 1, 0, 1);
+  const today = new Date();
+  const cardCommitmentsStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
   await ensureFixedEntriesForMonth(referenceMonth);
 
@@ -111,6 +130,8 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
     recentEntries,
     savedEntries,
     installmentPreview,
+    cashPositionEntries,
+    openCreditEntries,
   ] = await Promise.all([
     prisma.person.findMany({
       where: { userId, isActive: true },
@@ -271,6 +292,63 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       orderBy: [{ dueDate: "asc" }, { number: "asc" }],
       take: 3,
     }),
+    prisma.financialEntry.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        competenceDate: {
+          lt: end,
+        },
+      },
+      select: {
+        type: true,
+        amount: true,
+        competenceDate: true,
+        paymentMethod: true,
+        settlementStatus: true,
+        person: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    }),
+    prisma.financialEntry.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        type: EntryType.EXPENSE,
+        paymentMethod: {
+          in: [PaymentMethod.CREDIT_SINGLE, PaymentMethod.CREDIT_INSTALLMENT],
+        },
+        settlementStatus: SettlementStatus.PENDING,
+        competenceDate: {
+          gte: cardCommitmentsStart,
+        },
+      },
+      include: {
+        account: {
+          select: {
+            id: true,
+            name: true,
+            dueDay: true,
+          },
+        },
+        installment: {
+          select: {
+            number: true,
+            dueDate: true,
+            installmentPurchase: {
+              select: {
+                installmentCount: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ competenceDate: "asc" }, { createdAt: "asc" }],
+    }),
   ]);
 
   const [categories, groupedPeople, accounts] = await Promise.all([
@@ -339,6 +417,39 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
   monthlyExpense.forEach((entry) => {
     const month = entry.competenceDate.getMonth();
     expenseByMonth.set(month, (expenseByMonth.get(month) ?? 0) + Number(entry.amount));
+  });
+
+  const futureInvoiceGroups = groupFutureCreditInvoices(
+    openCreditEntries.map((entry) => ({
+      id: entry.id,
+      description: entry.description,
+      cardId: entry.account.id,
+      cardName: entry.account.name,
+      competenceDate: entry.competenceDate,
+      dueDate: entry.installment?.dueDate ?? getInvoiceDueDate(entry.competenceDate, entry.account.dueDay),
+      amount: Number(entry.amount),
+      installment: entry.installment
+        ? {
+            number: entry.installment.number,
+            total: entry.installment.installmentPurchase.installmentCount,
+          }
+        : null,
+    })),
+  );
+  const futureCardCommitmentsTotal = openCreditEntries.reduce((sum, entry) => sum + Number(entry.amount), 0);
+  const cashAndCardSummary = calculateCashAndCardSummary({
+    cashEntries: cashPositionEntries
+      .map((entry) => ({
+        ...entry,
+        amount: Number(entry.amount),
+        personId: entry.person.id,
+        personName: entry.person.name,
+      }))
+      .filter(shouldIncludeEntryInAvailableCash),
+    periodStart: start,
+    periodEnd: end,
+    nextInvoiceAmount: futureInvoiceGroups.nextInvoice?.total ?? 0,
+    futureCardCommitmentsAmount: futureCardCommitmentsTotal,
   });
 
   const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "short" });
@@ -438,6 +549,13 @@ export async function getDashboardSummary(referenceMonth?: string, requestedYear
       "Outro",
     ),
     monthlyFlow,
+    cashAndCardSummary: {
+      ...cashAndCardSummary,
+      nextInvoiceMonthLabel: futureInvoiceGroups.nextInvoice?.monthLabel ?? null,
+      nextInvoiceDueDateLabel: futureInvoiceGroups.nextInvoice?.dueDateLabel ?? null,
+      nextInvoiceCards: futureInvoiceGroups.nextInvoice?.cards ?? [],
+      futureInvoiceMonthGroups: futureInvoiceGroups.groups,
+    },
     installmentsPreview: installmentPreview.map((installment) => ({
       id: installment.id,
       cardName: installment.installmentPurchase.account.name,

@@ -60,6 +60,106 @@ export function getMobileDashboardMock(referenceMonth: string): DashboardSummary
       { monthKey: "2026-11", monthLabel: "nov", income: 0, expense: 0, balance: 0 },
       { monthKey: "2026-12", monthLabel: "dez", income: 0, expense: 0, balance: 0 },
     ],
+    cashAndCardSummary: {
+      availableCash: 6200,
+      availableCashBreakdown: {
+        totals: {
+          id: "total",
+          label: "Total",
+          previousBalance: 1000,
+          income: 8650,
+          expenses: 2450,
+          saved: 1000,
+          net: 6200,
+        },
+        people: [
+          {
+            id: "kevin",
+            label: "Kevin",
+            previousBalance: 700,
+            income: 5200,
+            expenses: 1600,
+            saved: 700,
+            net: 3600,
+          },
+          {
+            id: "isabelle",
+            label: "Isabelle",
+            previousBalance: 300,
+            income: 3450,
+            expenses: 850,
+            saved: 300,
+            net: 2600,
+          },
+        ],
+      },
+      nextInvoiceTotal: 1240.8,
+      nextInvoiceMonthLabel: "Julho/2026",
+      nextInvoiceDueDateLabel: "05/07/2026",
+      nextInvoiceCards: [
+        {
+          id: "invoice-1",
+          cardName: "Cartao Nubank Kevin",
+          dueDateLabel: "05/07/2026",
+          amount: 850,
+        },
+        {
+          id: "invoice-2",
+          cardName: "Cartao Inter Isabelle",
+          dueDateLabel: "05/07/2026",
+          amount: 390.8,
+        },
+      ],
+      futureCardCommitments: 1240.8,
+      projectedAfterNextInvoice: 4959.2,
+      futureInvoiceMonthGroups: [
+        {
+          monthKey: "2026-07",
+          monthLabel: "Julho/2026",
+          total: 1240.8,
+          invoices: [
+            {
+              id: "invoice-1",
+              cardName: "Cartao Nubank Kevin",
+              invoiceMonthKey: "2026-07",
+              invoiceMonthLabel: "Julho/2026",
+              dueDateLabel: "05/07/2026",
+              amount: 850,
+              items: [
+                {
+                  id: "item-1",
+                  description: "Geladeira",
+                  amount: 300,
+                  invoiceMonthLabel: "Julho/2026",
+                  dueDateLabel: "05/07/2026",
+                  installmentLabel: "5/10",
+                  lastInstallmentLabel: "Novembro/2026",
+                },
+              ],
+            },
+            {
+              id: "invoice-2",
+              cardName: "Cartao Inter Isabelle",
+              invoiceMonthKey: "2026-07",
+              invoiceMonthLabel: "Julho/2026",
+              dueDateLabel: "05/07/2026",
+              amount: 390.8,
+              items: [
+                {
+                  id: "item-2",
+                  description: "Mercado Atacadão",
+                  amount: 390.8,
+                  invoiceMonthLabel: "Julho/2026",
+                  dueDateLabel: "05/07/2026",
+                  installmentLabel: null,
+                  lastInstallmentLabel: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
     savedEntries: [
       {
         id: "saved-1",

@@ -56,6 +56,67 @@ export type DashboardSavedEntry = {
   eventDateLabel: string;
 };
 
+export type DashboardFutureInvoiceItem = {
+  id: string;
+  description: string;
+  amount: number;
+  invoiceMonthLabel: string;
+  dueDateLabel: string;
+  installmentLabel: string | null;
+  lastInstallmentLabel: string | null;
+};
+
+export type DashboardFutureInvoiceCard = {
+  id: string;
+  cardName: string;
+  invoiceMonthKey: string;
+  invoiceMonthLabel: string;
+  dueDateLabel: string;
+  amount: number;
+  items: DashboardFutureInvoiceItem[];
+};
+
+export type DashboardFutureInvoiceMonthGroup = {
+  monthKey: string;
+  monthLabel: string;
+  total: number;
+  invoices: DashboardFutureInvoiceCard[];
+};
+
+export type DashboardNextInvoiceCard = {
+  id: string;
+  cardName: string;
+  dueDateLabel: string;
+  amount: number;
+};
+
+export type DashboardAvailableCashBreakdownGroup = {
+  id: string;
+  label: string;
+  previousBalance: number;
+  income: number;
+  expenses: number;
+  saved: number;
+  net: number;
+};
+
+export type DashboardAvailableCashBreakdown = {
+  totals: DashboardAvailableCashBreakdownGroup;
+  people: DashboardAvailableCashBreakdownGroup[];
+};
+
+export type DashboardCashAndCardSummary = {
+  availableCash: number;
+  availableCashBreakdown: DashboardAvailableCashBreakdown;
+  nextInvoiceTotal: number;
+  nextInvoiceMonthLabel: string | null;
+  nextInvoiceDueDateLabel: string | null;
+  nextInvoiceCards: DashboardNextInvoiceCard[];
+  futureCardCommitments: number;
+  projectedAfterNextInvoice: number;
+  futureInvoiceMonthGroups: DashboardFutureInvoiceMonthGroup[];
+};
+
 export type DashboardSummary = {
   greetingName: string;
   referenceMonth: string;
@@ -79,6 +140,7 @@ export type DashboardSummary = {
   spendingByInstitution: DashboardBreakdownItem[];
   spendingByPaymentMethod: DashboardBreakdownItem[];
   monthlyFlow: DashboardMonthlyFlowItem[];
+  cashAndCardSummary: DashboardCashAndCardSummary;
   installmentsPreview: DashboardInstallmentPreview[];
   savedEntries: DashboardSavedEntry[];
   recentEntries: DashboardRecentEntry[];

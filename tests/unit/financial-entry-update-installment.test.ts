@@ -16,6 +16,7 @@ const findPerson = vi.fn();
 const findAccount = vi.fn();
 const findCategory = vi.fn();
 const findPaymentMethod = vi.fn();
+const financialEntryUpdate = vi.fn();
 const txEntryUpdate = vi.fn();
 const txInstallmentUpdate = vi.fn();
 const txInstallmentFindMany = vi.fn();
@@ -36,6 +37,7 @@ vi.mock("@/lib/prisma/client", () => ({
   prisma: {
     financialEntry: {
       findFirst: findEntry,
+      update: financialEntryUpdate,
     },
     person: {
       findFirst: findPerson,
@@ -72,10 +74,104 @@ describe("updateFinancialEntryUseCase for installments", () => {
       },
     });
     findPerson.mockResolvedValue({ id: "person-1", isActive: true });
-    findAccount.mockResolvedValue({ id: "account-1", isActive: true, type: AccountType.CREDIT_CARD });
+    findAccount.mockResolvedValue({
+      id: "account-1",
+      isActive: true,
+      type: AccountType.CREDIT_CARD,
+      closingDay: 29,
+      dueDay: 5,
+    });
     findCategory.mockResolvedValue({ id: "category-1", isActive: true, type: CategoryType.EXPENSE });
     findPaymentMethod.mockResolvedValue({ id: "payment-1", isActive: true });
     txInstallmentFindMany.mockResolvedValue([]);
+    financialEntryUpdate.mockResolvedValue({ id: "entry-1" });
+  });
+
+  it("recalcula a competência de crédito à vista pela fatura do cartão", async () => {
+    findEntry.mockResolvedValueOnce({
+      id: "entry-credit-single",
+      userId: "user-1",
+      origin: EntryOrigin.MANUAL,
+      installment: null,
+    });
+    const { updateFinancialEntryUseCase } = await import(
+      "@/lib/application/financial-entry/update-financial-entry.use-case"
+    );
+
+    await updateFinancialEntryUseCase({
+      id: "entry-credit-single",
+      description: "Compra no crédito",
+      amount: 100,
+      eventDate: "2026-05-30",
+      type: EntryType.EXPENSE,
+      personId: "person-1",
+      accountId: "account-1",
+      categoryId: "category-1",
+      paymentMethod: PaymentMethod.CREDIT_SINGLE,
+      notes: "",
+      settlementStatus: SettlementStatus.PENDING,
+      frequencyProfile: EntryFrequencyProfile.VARIABLE,
+      isInstallment: false,
+      installmentCount: 0,
+      isInstallmentEntry: false,
+    });
+
+    expect(financialEntryUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "entry-credit-single" },
+        data: expect.objectContaining({
+          eventDate: new Date(2026, 4, 30),
+          competenceDate: new Date(2026, 6, 1),
+        }),
+      }),
+    );
+  });
+
+  it("mantém Pix no mês da data informada ao editar", async () => {
+    findEntry.mockResolvedValueOnce({
+      id: "entry-pix",
+      userId: "user-1",
+      origin: EntryOrigin.MANUAL,
+      installment: null,
+    });
+    findAccount.mockResolvedValueOnce({
+      id: "account-1",
+      isActive: true,
+      type: AccountType.CHECKING,
+      closingDay: null,
+      dueDay: null,
+    });
+    const { updateFinancialEntryUseCase } = await import(
+      "@/lib/application/financial-entry/update-financial-entry.use-case"
+    );
+
+    await updateFinancialEntryUseCase({
+      id: "entry-pix",
+      description: "Compra no Pix",
+      amount: 100,
+      eventDate: "2026-05-30",
+      type: EntryType.EXPENSE,
+      personId: "person-1",
+      accountId: "account-1",
+      categoryId: "category-1",
+      paymentMethod: PaymentMethod.PIX,
+      notes: "",
+      settlementStatus: SettlementStatus.SETTLED,
+      frequencyProfile: EntryFrequencyProfile.VARIABLE,
+      isInstallment: false,
+      installmentCount: 0,
+      isInstallmentEntry: false,
+    });
+
+    expect(financialEntryUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "entry-pix" },
+        data: expect.objectContaining({
+          eventDate: new Date(2026, 4, 30),
+          competenceDate: new Date(2026, 4, 1),
+        }),
+      }),
+    );
   });
 
   it("edita somente a parcela atual e não altera o número persistido", async () => {
@@ -106,7 +202,8 @@ describe("updateFinancialEntryUseCase for installments", () => {
         where: { id: "entry-4" },
         data: expect.objectContaining({
           description: "Descrição livre ajustada em maio",
-          competenceDate: new Date(2026, 4, 1),
+          eventDate: new Date(2026, 4, 4),
+          competenceDate: new Date(2026, 8, 1),
         }),
       }),
     );
@@ -114,7 +211,8 @@ describe("updateFinancialEntryUseCase for installments", () => {
     const installmentUpdateData = txInstallmentUpdate.mock.calls[0][0].data;
     expect(installmentUpdateData).toMatchObject({
       amount: 123.45,
-      competenceDate: new Date(2026, 4, 1),
+      dueDate: new Date(2026, 8, 5),
+      competenceDate: new Date(2026, 8, 1),
     });
     expect(installmentUpdateData).not.toHaveProperty("number");
   });

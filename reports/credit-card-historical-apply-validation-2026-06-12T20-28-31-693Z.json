@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "validation": {
+    "totalIdsNoRelatorio": 202,
+    "idsUnicosNoRelatorio": 202,
+    "registrosEncontrados": 202,
+    "ausentes": [],
+    "naoCreditoOuNaoDespesa": [],
+    "removidos": [],
+    "valorDivergente": [],
+    "eventDateDivergente": [],
+    "parcelaNumeroDivergente": [],
+    "parcelaTotalDivergente": [],
+    "competenciaNaoAplicada": [],
+    "vencimentoNaoAplicado": [],
+    "creditoAVista": 22,
+    "creditoParcelado": 180
+  }
+}
