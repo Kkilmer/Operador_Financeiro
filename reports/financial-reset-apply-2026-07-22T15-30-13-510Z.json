@@ -1,0 +1,114 @@
+{
+  "executedAt": "2026-07-22T15:30:13.497Z",
+  "mode": "APPLY_FULL_FINANCIAL_RESET",
+  "transaction": {
+    "used": true,
+    "rollbackOnError": true,
+    "status": "committed"
+  },
+  "affectedTables": [
+    "Installment",
+    "FinancialEntry",
+    "InstallmentPurchase"
+  ],
+  "preservedTables": [
+    "User",
+    "Session",
+    "Person",
+    "FinancialInstitution",
+    "FinancialAccount",
+    "Category",
+    "PaymentMethodOption",
+    "SupportTicket"
+  ],
+  "beforeFinancial": {
+    "entries": 281,
+    "incomeEntries": 7,
+    "expenseEntries": 271,
+    "savedEntries": 3,
+    "fixedEntries": 33,
+    "installments": 192,
+    "purchases": 27
+  },
+  "removed": {
+    "entries": 281,
+    "incomeEntries": 7,
+    "expenseEntries": 271,
+    "savedEntries": 3,
+    "fixedEntries": 33,
+    "installments": 192,
+    "purchases": 27
+  },
+  "afterFinancial": {
+    "entries": 0,
+    "incomeEntries": 0,
+    "expenseEntries": 0,
+    "savedEntries": 0,
+    "fixedEntries": 0,
+    "installments": 0,
+    "purchases": 0
+  },
+  "beforePreserved": {
+    "users": 4,
+    "sessions": 18,
+    "people": 2,
+    "institutions": 10,
+    "accounts": 10,
+    "categories": 20,
+    "paymentMethods": 8,
+    "supportTickets": 2
+  },
+  "afterPreserved": {
+    "users": 4,
+    "sessions": 18,
+    "people": 2,
+    "institutions": 10,
+    "accounts": 10,
+    "categories": 20,
+    "paymentMethods": 8,
+    "supportTickets": 2
+  },
+  "preservedComparison": {
+    "users": {
+      "before": 4,
+      "after": 4,
+      "preserved": true
+    },
+    "sessions": {
+      "before": 18,
+      "after": 18,
+      "preserved": true
+    },
+    "people": {
+      "before": 2,
+      "after": 2,
+      "preserved": true
+    },
+    "institutions": {
+      "before": 10,
+      "after": 10,
+      "preserved": true
+    },
+    "accounts": {
+      "before": 10,
+      "after": 10,
+      "preserved": true
+    },
+    "categories": {
+      "before": 20,
+      "after": 20,
+      "preserved": true
+    },
+    "paymentMethods": {
+      "before": 8,
+      "after": 8,
+      "preserved": true
+    },
+    "supportTickets": {
+      "before": 2,
+      "after": 2,
+      "preserved": true
+    }
+  },
+  "success": true
+}

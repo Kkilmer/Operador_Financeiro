@@ -73,6 +73,21 @@ function hasActiveFilters(filters: FinancialEntryListFilters) {
   return Object.values(filters).some((value) => value !== undefined && value !== "");
 }
 
+function formatEntryDate(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatEntryTime(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export default async function FinancialEntriesPage({ searchParams }: FinancialEntriesPageProps) {
   const params = searchParams ? await searchParams : undefined;
   const selectedMonth =
@@ -219,6 +234,7 @@ export default async function FinancialEntriesPage({ searchParams }: FinancialEn
               <thead>
                 <tr className="text-left text-slate-500">
                   <th className="py-3 pr-4 font-medium">Descrição</th>
+                  <th className="py-3 pr-4 font-medium">Data/Hora</th>
                   <th className="py-3 pr-4 font-medium">Pessoa</th>
                   <th className="py-3 pr-4 font-medium">Conta</th>
                   <th className="py-3 pr-4 font-medium">Categoria</th>
@@ -253,6 +269,10 @@ export default async function FinancialEntriesPage({ searchParams }: FinancialEn
                             ) : null}
                           </div>
                         </div>
+                      </td>
+                      <td className="whitespace-nowrap py-4 pr-4 text-slate-700">
+                        <p className="font-medium text-slate-900">{formatEntryDate(entry.eventDate)}</p>
+                        <p className="text-xs text-slate-500">{formatEntryTime(entry.createdAt)}</p>
                       </td>
                       <td className="py-4 pr-4 text-slate-700">{entry.person.name}</td>
                       <td className="py-4 pr-4 text-slate-700">{entry.account.name}</td>
